@@ -12,5 +12,5 @@ pub fn app_router() -> Router<AppState> {
         .merge(root::router())
         .nest("/task", task::router())
         .nest("/board", board::router())
-        .nest("column", column::router())
+        .nest("/column", column::router())
 }

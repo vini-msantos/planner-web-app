@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS columns (
   position REAL NOT NULL,
   routes_to TEXT REFERENCES columns(id) ON DELETE SET NULL,
   completes_tasks BOOLEAN NOT NULL CHECK (completes_tasks IN (0, 1)),
+  tasks_hidden BOOLEAN NOT NULL CHECK (tasks_hidden IN (0, 1)),
   board_id TEXT NOT NULL REFERENCES boards(id) ON DELETE CASCADE
 );
 
@@ -18,7 +19,6 @@ CREATE TABLE IF NOT EXISTS tasks (
   id TEXT PRIMARY KEY NOT NULL,
   title TEXT NOT NULL,
   description TEXT NOT NULL DEFAULT '',
-  completed BOOLEAN NOT NULL CHECK (completed IN (0, 1)),
   due_date DATETIME,
   position REAL NOT NULL,
   column_id TEXT NOT NULL REFERENCES columns(id) ON DELETE CASCADE

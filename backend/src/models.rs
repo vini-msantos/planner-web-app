@@ -19,6 +19,7 @@ pub struct Column {
     pub name: String,
     pub position: f64,
     pub routes_to: Option<ColumnId>,
+    pub tasks_hidden: bool,
     pub completes_tasks: bool,
     pub board_id: BoardId,
 }
@@ -28,7 +29,6 @@ pub struct Task {
     pub id: TaskId,
     pub title: String,
     pub description: String,
-    pub completed: bool,
     pub due_date: Option<NaiveDateTime>,
     pub position: f64,
     pub column_id: ColumnId,

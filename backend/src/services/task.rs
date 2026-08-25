@@ -1,3 +1,4 @@
+use anyhow::bail;
 use sqlx::{SqlitePool, query, query_as, query_as_unchecked};
 
 use crate::dtos::{TaskCreationPayload, TaskMovePayload, TaskPatchPayload};
@@ -9,17 +10,15 @@ pub async fn patch(pool: &SqlitePool, id: &str, payload: TaskPatchPayload) -> an
         UPDATE tasks SET
             title = COALESCE($1, title),
             description = COALESCE($2, description),
-            completed = COALESCE($3, completed),
-            position = COALESCE($4, position),
+            position = COALESCE($3, position),
             due_date = CASE
-                WHEN $5 IS TRUE THEN $6
+                WHEN $4 IS TRUE THEN $5
                ELSE due_date
             END
-        WHERE id = $7;
+        WHERE id = $6;
         "#,
         &payload.title,
         &payload.description,
-        &payload.completed,
         &payload.position,
         &payload.due_date.is_some(),
         &payload.due_date.flatten(),
@@ -29,10 +28,15 @@ pub async fn patch(pool: &SqlitePool, id: &str, payload: TaskPatchPayload) -> an
 }
 
 pub async fn post(pool: &SqlitePool, payload: TaskCreationPayload) -> anyhow::Result<()> {
+    let routes_to_somewhere = query_as!(
+        Column, r#"SELECT * FROM columns WHERE id = $1;"#, &payload.column_id
+    ).fetch_one(pool).await?.routes_to.is_some();
+    if routes_to_somewhere { bail!("Can't add tasks to a column that routes to somewhere.") }
+
     query!(
         r#"
-        INSERT INTO tasks (id, title, description, completed, due_date, position, column_id)
-        VALUES ($1, $2, $3, FALSE, $4, $5, $6);
+        INSERT INTO tasks (id, title, description, due_date, position, column_id)
+        VALUES ($1, $2, $3, $4, $5, $6);
         "#,
         &payload.id,
         &payload.title,
@@ -64,14 +68,12 @@ pub async fn move_to(pool: &SqlitePool, id: &str, payload: TaskMovePayload) -> a
         r#"
         UPDATE tasks SET
             column_id = COALESCE($1, $2),
-            position = $3,
-            completed = COALESCE($4, completed)
-        WHERE id = $5;
+            position = $3
+        WHERE id = $4;
         "#,
         &dest_col.routes_to,
         &dest_col.id,
         position,
-        &dest_col.completes_tasks.then(|| true),
         id
     ).execute(pool).await?;
     Ok(())

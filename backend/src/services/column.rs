@@ -1,13 +1,21 @@
-use anyhow::{Error, bail};
+use anyhow::bail;
 use sqlx::{SqlitePool, query, query_as, query_as_unchecked};
 
 use crate::{dtos::{ColumnCreationPayload, ColumnPatchPayload, ColumnRoutingPayload, TaskMovePayload}, models::{Column, Task}, services};
 
 pub async fn create(pool: &SqlitePool, payload: ColumnCreationPayload) -> anyhow::Result<()> {
+    let tasks_hidden = payload.routes_to.is_some();
+    let completes_tasks = payload.completes_tasks && !payload.routes_to.is_some();
+    
     query!(
-        r#"INSERT INTO columns (id, name, position, board_id) VALUES ($1, $2, $3, $4);"#,
-        &payload.id, &payload.name, &payload.position, &payload.board_id
+        r#"INSERT INTO columns (id, name, position, board_id, completes_tasks, tasks_hidden)
+        VALUES ($1, $2, $3, $4, $5, $6);"#,
+        &payload.id, &payload.name, &payload.position, &payload.board_id, completes_tasks, tasks_hidden
     ).execute(pool).await?;
+
+    if payload.routes_to.is_some() {
+        set_routing(pool, &payload.id, ColumnRoutingPayload { routes_to: payload.routes_to }).await?;
+    }
     Ok(())
 }
 
@@ -22,17 +30,12 @@ pub async fn patch(pool: &SqlitePool, id: &str, payload: ColumnPatchPayload) -> 
         UPDATE columns SET
             name = COALESCE($1, name),
             position = COALESCE($2, position),
-            completes_tasks = COALESCE($3, completes_tasks)
-        WHERE id = $4;
+            completes_tasks = COALESCE($3, completes_tasks),
+            tasks_hidden = COALESCE($4, tasks_hidden)
+        WHERE id = $5;
         "#,
-        &payload.name, &payload.position, &payload.completes_tasks, id
+        &payload.name, &payload.position, &payload.completes_tasks, &payload.tasks_hidden, id
     ).execute(pool).await?;
-
-    if payload.completes_tasks.unwrap_or(false) {
-        query!(r#"UPDATE tasks SET completed = TRUE WHERE column_id = $1;"#, id)
-        .execute(pool).await?;        
-    }
-
     Ok(())
 }
 
@@ -54,7 +57,7 @@ pub async fn set_routing(pool: &SqlitePool, id: &str, payload: ColumnRoutingPayl
 
         for (index, task) in tasks.iter().enumerate() {
             let to_position = tail_pos + index as f64 * 1000.0;
-            services::task::move_to(pool, &task.id, TaskMovePayload { to_column: dest_col_id.clone(), to_position });
+            services::task::move_to(pool, &task.id, TaskMovePayload { to_column: dest_col_id.clone(), to_position }).await?;
         }
     } else {
         query!(r#"UPDATE columns SET routes_to = NULL WHERE id = $1;"#, id).execute(pool).await?;

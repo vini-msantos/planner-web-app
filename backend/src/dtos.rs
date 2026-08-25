@@ -23,7 +23,6 @@ pub struct TaskMovePayload {
 pub struct TaskPatchPayload {
     pub title: Option<String>,
     pub description: Option<Option<String>>,
-    pub completed: Option<bool>,
     pub due_date: Option<Option<NaiveDateTime>>,
     pub position: Option<f64>
 }
@@ -33,6 +32,7 @@ pub struct ColumnPatchPayload {
     pub name: Option<String>,
     pub position: Option<f64>,
     pub completes_tasks: Option<bool>,
+    pub tasks_hidden: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -46,6 +46,8 @@ pub struct ColumnCreationPayload {
     pub name: String,
     pub position: f64,
     pub board_id: BoardId,
+    pub routes_to: Option<ColumnId>,
+    pub completes_tasks: bool,
 }
 
 #[derive(Debug, Deserialize)]

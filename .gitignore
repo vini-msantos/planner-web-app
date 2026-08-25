@@ -1,3 +1,5 @@
 backend/.env
 backend/planner.db
+backend/planner.db-wal
+backend/planner.db-shm
 backend/target/*
