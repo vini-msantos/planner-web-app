@@ -1,13 +1,23 @@
-use axum::{Json, Router, extract::{Path, State}, http::StatusCode, routing::{delete, patch, post}};
+use std::collections::HashMap;
 
-use crate::{AppState, dtos::{TaskCreationPayload, TaskMovePayload, TaskPatchPayload}, models::TaskId, services};
+use axum::{Json, Router, extract::{Path, State}, http::StatusCode, routing::{delete, get, patch, post}};
+
+use crate::{AppState, dtos::{TaskCreationPayload, TaskMovePayload, TaskPatchPayload}, models::{Task, TaskId}, services};
 
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", post(post_task))
+        .route("/", get(get_tasks))
         .route("/{id}", patch(patch_task))
         .route("/{id}", delete(delete_task))
         .route("/{id}/move", post(move_task))
+}
+
+async fn get_tasks(
+    State(state): State<AppState>,
+) -> Result<Json<HashMap<TaskId, Task>>, StatusCode> {
+    services::task::get(&state.pool).await.map_err(|_| StatusCode::BAD_REQUEST)
+    .map(|tasks| Json(tasks))
 }
 
 async fn patch_task(

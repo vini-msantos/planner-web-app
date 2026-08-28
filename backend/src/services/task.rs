@@ -1,14 +1,23 @@
+use std::collections::HashMap;
+
 use anyhow::bail;
 use sqlx::{SqlitePool, query, query_as, query_as_unchecked};
 
 use crate::dtos::{TaskCreationPayload, TaskMovePayload, TaskPatchPayload};
-use crate::models::{Column, Task};
+use crate::models::{Column, Task, TaskId};
+
+pub async fn get(pool: &SqlitePool) -> anyhow::Result<HashMap<TaskId, Task>> {
+    let tasks = sqlx::query_as!(Task, r#"SELECT * FROM tasks;"#)
+        .fetch_all(pool).await?
+        .into_iter().map(|task| (task.id.clone(), task)).collect();
+    Ok(tasks)
+}
 
 pub async fn patch(pool: &SqlitePool, id: &str, payload: TaskPatchPayload) -> anyhow::Result<()> {
     sqlx::query!(
         r#"
         UPDATE tasks SET
-            title = COALESCE($1, title),
+            name = COALESCE($1, name),
             description = COALESCE($2, description),
             position = COALESCE($3, position),
             due_date = CASE
@@ -17,7 +26,7 @@ pub async fn patch(pool: &SqlitePool, id: &str, payload: TaskPatchPayload) -> an
             END
         WHERE id = $6;
         "#,
-        &payload.title,
+        &payload.name,
         &payload.description,
         &payload.position,
         &payload.due_date.is_some(),
@@ -35,11 +44,11 @@ pub async fn post(pool: &SqlitePool, payload: TaskCreationPayload) -> anyhow::Re
 
     query!(
         r#"
-        INSERT INTO tasks (id, title, description, due_date, position, column_id)
+        INSERT INTO tasks (id, name, description, due_date, position, column_id)
         VALUES ($1, $2, $3, $4, $5, $6);
         "#,
         &payload.id,
-        &payload.title,
+        &payload.name,
         &payload.description,
         &payload.due_date,
         &payload.position,
@@ -61,7 +70,9 @@ pub async fn move_to(pool: &SqlitePool, id: &str, payload: TaskMovePayload) -> a
     
     let position = if let Some(routes_to) = &dest_col.routes_to {
         query_as_unchecked!(Task, r#"SELECT * FROM tasks WHERE column_id = $1;"#, routes_to)
-            .fetch_all(pool).await?.len() as f64 * 1000.0 + 1000.0
+            .fetch_all(pool).await?.iter()
+            .map(|t| t.position)
+            .fold(0.0, |acc, p| p.max(acc)) + 1000.0
     } else { payload.to_position };
 
     query!(

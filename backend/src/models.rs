@@ -11,12 +11,15 @@ pub type TaskId = String;
 pub struct Board {
     pub id: BoardId,
     pub name: String,
+    pub description: String,
+    pub pinned: Option<NaiveDateTime>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Column {
     pub id: ColumnId,
     pub name: String,
+    pub description: String,
     pub position: f64,
     pub routes_to: Option<ColumnId>,
     pub tasks_hidden: bool,
@@ -27,7 +30,7 @@ pub struct Column {
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Task {
     pub id: TaskId,
-    pub title: String,
+    pub name: String,
     pub description: String,
     pub due_date: Option<NaiveDateTime>,
     pub position: f64,

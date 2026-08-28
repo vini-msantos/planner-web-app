@@ -2,12 +2,15 @@ PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS boards (
   id TEXT PRIMARY KEY not NULL,
-  name TEXT NOT NULL
+  name TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  pinned DATETIME
 );
 
 CREATE TABLE IF NOT EXISTS columns (
   id TEXT PRIMARY KEY NOT NULL,
   name TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
   position REAL NOT NULL,
   routes_to TEXT REFERENCES columns(id) ON DELETE SET NULL,
   completes_tasks BOOLEAN NOT NULL CHECK (completes_tasks IN (0, 1)),
@@ -17,7 +20,7 @@ CREATE TABLE IF NOT EXISTS columns (
 
 CREATE TABLE IF NOT EXISTS tasks (
   id TEXT PRIMARY KEY NOT NULL,
-  title TEXT NOT NULL,
+  name TEXT NOT NULL,
   description TEXT NOT NULL DEFAULT '',
   due_date DATETIME,
   position REAL NOT NULL,

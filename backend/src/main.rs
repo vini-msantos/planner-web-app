@@ -6,6 +6,7 @@ mod dtos;
 use axum::Router;
 use sqlx::{SqlitePool, sqlite::SqliteConnectOptions};
 use std::{env, str::FromStr};
+use tower_http::cors::CorsLayer;
 
 #[derive(Clone)]
 struct AppState {
@@ -29,9 +30,10 @@ async fn main() {
 
     let app = Router::new()
         .merge(routes::app_router())
+        .layer(CorsLayer::permissive())
         .with_state(AppState{ pool });
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:3001").await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
 

@@ -1,16 +1,25 @@
+use std::collections::HashMap;
+
 use anyhow::bail;
 use sqlx::{SqlitePool, query, query_as, query_as_unchecked};
 
-use crate::{dtos::{ColumnCreationPayload, ColumnPatchPayload, ColumnRoutingPayload, TaskMovePayload}, models::{Column, Task}, services};
+use crate::{dtos::{ColumnCreationPayload, ColumnPatchPayload, ColumnRoutingPayload, TaskMovePayload}, models::{Column, ColumnId, Task}, services};
+
+pub async fn get(pool: &SqlitePool) -> anyhow::Result<HashMap<ColumnId, Column>> {
+    let columns = sqlx::query_as!(Column, r#"SELECT * FROM columns;"#)
+        .fetch_all(pool).await?
+        .into_iter().map(|column| (column.id.clone(), column)).collect();
+    Ok(columns)
+}
 
 pub async fn create(pool: &SqlitePool, payload: ColumnCreationPayload) -> anyhow::Result<()> {
     let tasks_hidden = payload.routes_to.is_some();
     let completes_tasks = payload.completes_tasks && !payload.routes_to.is_some();
     
     query!(
-        r#"INSERT INTO columns (id, name, position, board_id, completes_tasks, tasks_hidden)
-        VALUES ($1, $2, $3, $4, $5, $6);"#,
-        &payload.id, &payload.name, &payload.position, &payload.board_id, completes_tasks, tasks_hidden
+        r#"INSERT INTO columns (id, name, description, position, board_id, completes_tasks, tasks_hidden)
+        VALUES ($1, $2, $3, $4, $5, $6, $7);"#,
+        &payload.id, &payload.name, &payload.description, &payload.position, &payload.board_id, completes_tasks, tasks_hidden
     ).execute(pool).await?;
 
     if payload.routes_to.is_some() {
@@ -29,12 +38,13 @@ pub async fn patch(pool: &SqlitePool, id: &str, payload: ColumnPatchPayload) -> 
         r#"
         UPDATE columns SET
             name = COALESCE($1, name),
-            position = COALESCE($2, position),
-            completes_tasks = COALESCE($3, completes_tasks),
-            tasks_hidden = COALESCE($4, tasks_hidden)
-        WHERE id = $5;
+            description = COALESCE($2, description),
+            position = COALESCE($3, position),
+            completes_tasks = COALESCE($4, completes_tasks),
+            tasks_hidden = COALESCE($5, tasks_hidden)
+        WHERE id = $6;
         "#,
-        &payload.name, &payload.position, &payload.completes_tasks, &payload.tasks_hidden, id
+        &payload.name, &payload.description, &payload.position, &payload.completes_tasks, &payload.tasks_hidden, id
     ).execute(pool).await?;
     Ok(())
 }

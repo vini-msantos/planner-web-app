@@ -1,12 +1,22 @@
-use chrono::NaiveDateTime;
-use serde::Deserialize;
+use std::collections::HashMap;
 
-use crate::models::{BoardId, ColumnId, TaskId};
+use chrono::NaiveDateTime;
+use serde::{Deserialize, Serialize};
+
+use crate::models::{Board, BoardId, Column, ColumnId, Task, TaskId};
+
+#[derive(Debug, Serialize)]
+pub struct BoardDTO {
+    pub board: Board,
+    pub columns: HashMap<ColumnId, Column>,
+    pub routed_columns: HashMap<ColumnId, Column>,
+    pub tasks: HashMap<TaskId, Task>,
+}
 
 #[derive(Debug, Deserialize)]
 pub struct TaskCreationPayload {
     pub id: TaskId,
-    pub title: String,
+    pub name: String,
     pub description: String,
     pub due_date: Option<NaiveDateTime>,
     pub position: f64,
@@ -21,8 +31,8 @@ pub struct TaskMovePayload {
 
 #[derive(Debug, Deserialize)]
 pub struct TaskPatchPayload {
-    pub title: Option<String>,
-    pub description: Option<Option<String>>,
+    pub name: Option<String>,
+    pub description: Option<String>,
     pub due_date: Option<Option<NaiveDateTime>>,
     pub position: Option<f64>
 }
@@ -31,6 +41,7 @@ pub struct TaskPatchPayload {
 pub struct ColumnPatchPayload {
     pub name: Option<String>,
     pub position: Option<f64>,
+    pub description: Option<String>,
     pub completes_tasks: Option<bool>,
     pub tasks_hidden: Option<bool>,
 }
@@ -44,6 +55,7 @@ pub struct ColumnRoutingPayload {
 pub struct ColumnCreationPayload {
     pub id: ColumnId,
     pub name: String,
+    pub description: String,
     pub position: f64,
     pub board_id: BoardId,
     pub routes_to: Option<ColumnId>,
@@ -54,11 +66,14 @@ pub struct ColumnCreationPayload {
 pub struct BoardCreationPayload {
     pub id: BoardId,
     pub name: String,
+    pub description: String,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct BoardPatchPayload {
     pub name: Option<String>,
+    pub description: Option<String>,
+    pub pinned: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -67,7 +82,7 @@ pub struct RoutinePatchPayload {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct ScheduledActivity {
+    pub struct ScheduledActivityPatchPayload {
     pub name: Option<String>,
     pub task_id: Option<Option<TaskId>>,
     pub starts_on: Option<NaiveDateTime>,

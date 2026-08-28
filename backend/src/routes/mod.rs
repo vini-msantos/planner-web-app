@@ -10,7 +10,7 @@ mod column;
 pub fn app_router() -> Router<AppState> {
     Router::new()
         .merge(root::router())
-        .nest("/task", task::router())
-        .nest("/board", board::router())
-        .nest("/column", column::router())
+        .nest("/tasks", task::router())
+        .nest("/boards", board::router())
+        .nest("/columns", column::router())
 }
