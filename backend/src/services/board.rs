@@ -1,18 +1,13 @@
-
 use std::collections::HashMap;
 
 use chrono::Utc;
-use sqlx::{Encode, QueryBuilder, Sqlite, SqlitePool, Type, query, query_as};
+use sqlx::{AssertSqlSafe, SqlitePool, query, query_as};
 
 use crate::{dtos::{BoardCreationPayload, BoardDTO, BoardPatchPayload}, models::{Board, BoardId, Column, ColumnId, Task}};
 
-fn query_in<'a, T: Encode<'a, Sqlite> + Type<Sqlite>>(query: &str, list: &[T]) -> QueryBuilder<Sqlite> {
-    let placeholder = format!("IN ({})", vec!["?"; list.len()].join(", "));
-    let mut query = QueryBuilder::new(query.replacen("= ANY({})", &placeholder, 1));
-    for v in list {
-        query.push_bind(v);
-    }
-    return query
+fn multi_id_query(query: &str, list: &[String]) -> String {
+    let ids = list.iter().map(|n| format!("'{n}'")).collect::<Vec<String>>().join(", ");
+    query.replacen("= ANY({})", &format!("IN ({ids})"), 1)
 }
 
 pub async fn get(pool: &SqlitePool, id: &str) -> anyhow::Result<BoardDTO> {
@@ -26,13 +21,13 @@ pub async fn get(pool: &SqlitePool, id: &str) -> anyhow::Result<BoardDTO> {
     let ids = vec![routed_ids.clone(), column_ids.clone()].concat();
 
     let routed_query =
-        query_in(r#"SELECT * FROM columns WHERE id = ANY({});"#, &routed_ids);
-    let routed_columns = query_as::<_, Column>(dbg!(routed_query.sql()))
+        multi_id_query(r#"SELECT * FROM columns WHERE id = ANY({});"#, &routed_ids);
+    let routed_columns = query_as::<_, Column>(AssertSqlSafe(routed_query))
         .fetch_all(pool).await?.into_iter().map(move |rc| (rc.id.clone(), rc)).collect();
 
     let tasks_query =
-        query_in(r#"SELECT * FROM tasks WHERE id = ANY({});"#, &ids);
-    let tasks = query_as::<_, Task>(dbg!(tasks_query.sql()))
+        multi_id_query(r#"SELECT * FROM tasks WHERE column_id = ANY({});"#, &ids);
+    let tasks = query_as::<_, Task>(AssertSqlSafe(tasks_query))
         .fetch_all(pool).await?.into_iter().map(move |t| (t.id.clone(), t)).collect();
     
     let columns = column_list.into_iter().map(move |c| (c.id.clone(), c)).collect();
