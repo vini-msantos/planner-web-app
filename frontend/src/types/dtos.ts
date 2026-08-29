@@ -9,6 +9,13 @@ export type Bootstrap = {
   routine_activities: Record<string, RoutineActivity>
 }
 
+export type BoardDto = {
+  board: Board
+  columns: Record<string, Column>
+  routed_columns: Record<string, Column>
+  tasks: Record<string, Task>
+}
+
 export type TaskCreationPayload = {
   id: string
   title: string

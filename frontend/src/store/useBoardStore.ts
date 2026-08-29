@@ -20,9 +20,9 @@ type BoardStore = {
 }
 
 const useBoardStore = create<BoardStore>()(
-  (set) => {
+  (set, get) => {
     const fetchBoards = async () => {
-      const result = await getRequest<Board>("boards")
+      const result = await getRequest<Record<string, Board>>("boards")
       if (result == 'error') return set({error: 'timedOut'})
       set({boards: result})
     }
@@ -43,6 +43,7 @@ const useBoardStore = create<BoardStore>()(
         return result != 'error'? ok(null) : err('noSuchId') 
       },
       createBoard: async (payload): ApiResult<null, BoardCreationError> => {
+        if (get().boards[payload.id] != undefined) return err('invalidName')
         const result = await createRequest("boards", payload)
         if (result == 'ok') fetchBoards()
         return result != 'error' ? ok(null) : err('badRequest') 

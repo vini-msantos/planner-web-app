@@ -6,11 +6,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/colla
 import useAppSidebar from "@/hooks/useAppSidebar"
 import { ContextMenu, ContextMenuContent, ContextMenuGroup, ContextMenuItem, ContextMenuTrigger } from "../ui/context-menu"
 import type { Board } from "@/types/models"
-import useDialogStore from "@/store/useDialogStore"
-import type { ApiResult } from "@/utils/result"
 
 export default function AppSidebar() {
-  const { open, boards, boardsVisible, setBoardsVisible, showBoardCreationDialog, toggleBoardPin, deleteBoard } = useAppSidebar()
+  const { open, boards, boardsVisible, setBoardsVisible, promptDeleteBoard, promptCreateBoard, toggleBoardPin, promptEditBoard } = useAppSidebar()
 
   const boardList = Object.entries(boards).map(([_, b]) => b)
     .sort((a, b) => {
@@ -52,7 +50,7 @@ export default function AppSidebar() {
                 <ChevronDown className={`${boardsVisible ? "rotate-180" : ""} duration-300 h-5 w-5 transition-transform`} />
               </CollapsibleTrigger>
             </SidebarGroupAction>
-            <SidebarGroupAction onClick={showBoardCreationDialog} className="mr-6" title="Create Board">
+            <SidebarGroupAction onClick={promptCreateBoard} className="mr-6" title="Create Board">
               <Plus className="h-5 w-5" />
             </SidebarGroupAction>
 
@@ -63,8 +61,9 @@ export default function AppSidebar() {
                     <BoardTile
                       key={board.id}
                       board={board}
-                      onDeleteConfirm={() => deleteBoard(board.id)}
-                      togglePin={() => toggleBoardPin(board.id)}
+                      handleDelete={() => promptDeleteBoard(board)}
+                      handleEdit={() => promptEditBoard(board)}
+                      handlePin={() => toggleBoardPin(board.id)}
                     />
                   ))}
                 </SidebarMenu>
@@ -92,14 +91,7 @@ function NavigationItem({ name, to, isOpen, icon }: { name: string, to: string, 
   )
 }
 
-function BoardTile({ board, onDeleteConfirm, togglePin }: { board: Board, onDeleteConfirm: () => ApiResult<any, any>, togglePin: VoidFunction }) {
-  const showDeleteDialog = useDialogStore(s => s.showDeleteDialog)
-  const handleDelete = () => showDeleteDialog({
-    name: board.name,
-    description: "Deleting a board also deletes all columns and tasks inside it, are you sure you want to proceed?",
-    onConfirm: onDeleteConfirm
-  })
-
+function BoardTile({ board, handlePin, handleEdit, handleDelete }: { board: Board, handleDelete: VoidFunction, handlePin: VoidFunction, handleEdit: VoidFunction }) {
   return (
     <SidebarMenuItem className="group/item">
       <ContextMenu>
@@ -113,7 +105,7 @@ function BoardTile({ board, onDeleteConfirm, togglePin }: { board: Board, onDele
             </NavLink>
           </SidebarMenuButton>
 
-          <SidebarMenuAction title={board.pinned ? "Unpin board" : "Pin board"} onClick={togglePin}
+          <SidebarMenuAction title={board.pinned ? "Unpin board" : "Pin board"} onClick={handlePin}
             className={`group-hover/item:flex ${board.pinned ? "" : "hidden"}`}>
             <Pin className={`stroke-chart-2 ${board.pinned ? "fill-chart-2" : ""}`} />
             <span className="sr-only">Add Board</span>
@@ -121,7 +113,7 @@ function BoardTile({ board, onDeleteConfirm, togglePin }: { board: Board, onDele
         </ContextMenuTrigger>
         <ContextMenuContent>
           <ContextMenuGroup>
-            <ContextMenuItem>
+            <ContextMenuItem onClick={handleEdit}>
               <PencilIcon />
               Edit
             </ContextMenuItem>

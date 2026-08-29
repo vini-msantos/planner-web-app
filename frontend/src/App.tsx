@@ -4,8 +4,6 @@ import BoardGaleryPage from "./features/boards/BoardGaleryPage";
 import BoardPage from "./features/boards/BoardPage";
 import OverviewPage from "./features/overview/OverviewPage";
 import PlannerPage from "./features/planner/PlannerPage";
-import { useEffect } from "react";
-import { useAppStore } from "./store/useAppStore";
 
 const router = createBrowserRouter([
   {
@@ -33,11 +31,6 @@ const router = createBrowserRouter([
 ])
 
 export default function App() {
-  const state = useAppStore()
-  useEffect(() => {
-    state.fetchBootstrap()
-  }, [])
-
   return (
     <RouterProvider router={router} />
   )

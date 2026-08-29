@@ -10,7 +10,7 @@ const apiClient: AxiosInstance = axios.create({
   timeout: 10000,
 });
 
-export async function getRequest<T>(path: string): Promise<Record<string, T> | 'error'> {
+export async function getRequest<T>(path: string): Promise<T | 'error'> {
   try {
     return (await axios.get(`${apiUrl}/${path}`)).data
   } catch { return 'error' }
