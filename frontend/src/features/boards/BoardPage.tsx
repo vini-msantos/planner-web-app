@@ -8,9 +8,11 @@ import type { Board, Column, Task } from "@/types/models";
 import { EditIcon, GhostIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useSortable } from "@dnd-kit/react/sortable"
 import useBoard, { type UseBoardData } from "@/hooks/useBoard";
+import { PointerSensor } from "@dnd-kit/react";
+import { PointerActivationConstraints } from "@dnd-kit/dom";
 import { DragDropProvider } from "@dnd-kit/react"
 import { move } from "@dnd-kit/helpers"
-import { CollisionPriority } from "@dnd-kit/abstract"
+import { CollisionPriority, type DragEndEvent, type DragOverEvent } from "@dnd-kit/abstract"
 import "./board_page.css"
 
 
@@ -19,7 +21,7 @@ export default function BoardPage() {
 
   return (
     <div className="flex flex-col h-screen w-full">
-      {fetch.state == 'loading' && <Spinner className="w-10 h-10 m-auto"/>}
+      {fetch.state == 'loading' && <Spinner className="w-10 h-10 m-auto" />}
       {fetch.state == 'ok' &&
         <BoardDisplay
           board={fetch.board}
@@ -31,12 +33,12 @@ export default function BoardPage() {
           promptDeleteColumn={fetch.promptDeleteColumn}
           updateLocal={fetch.updateLocal}
         />
-    }
+      }
     </div>
   )
 }
 
-function BoardDisplay({board, columnOrder, columns, taskOrder, tasks, promptCreateColumn, promptDeleteColumn, updateLocal}: {
+function BoardDisplay({ board, columnOrder, columns, taskOrder, tasks, promptCreateColumn, promptDeleteColumn, updateLocal }: {
   board: Board,
   columns: Record<string, Column>,
   columnOrder: string[],
@@ -46,56 +48,74 @@ function BoardDisplay({board, columnOrder, columns, taskOrder, tasks, promptCrea
   promptDeleteColumn: (column: Column) => void,
   updateLocal: (func: (prevState: UseBoardData) => UseBoardData) => void,
 }) {
-
-  if (columnOrder.length > 0) return (
-      <ScrollArea className="h-full mt-6 mb-2">
-        <DragDropProvider
-          onDragOver={(event) => {
-            const {source} = event.operation;
-
-            if (source?.type != 'task') return;
-
-            updateLocal((s) => ({...s, taskOrder: move(taskOrder, event)}));
-          }}
-          onDragEnd={(event) => {
-            const {source} = event.operation;
-
-            if (event.canceled || source?.type != 'column') return;
-
-            updateLocal((s) => ({...s, columnOrder: move(columnOrder, event)}));
-          }}
-        >
-          <div className="flex flex-row w-full max-h-200 h-fit max-w-full pl-6 gap-x-6">
-              {columnOrder.map((columnId, ci) => (
-                <Column
-                  key={columnId} index={ci} column={columns[columnId]}
-                  promptDelete={() => promptDeleteColumn(columns[columnId])}
-                >
-                  {taskOrder[columnId].map((taskId, ti) => (
-                    <TaskTile column={columnId} index={ti} key={taskId} task={tasks[taskId]} /> 
-                  ))}
-                </Column>
-              ))}
-
-
-            <div className="min-w-40 h-65 group/add-column -translate-x-3">
-              <Button title="Add column" onClick={promptCreateColumn} variant="ghost" size='icon-lg' className="group-hover/add-column:opacity-100 group-hover/add-column:w-15 h-40 opacity-0 overflow-hidden w-0">
-                <PlusIcon />
-              </Button>
-            </div>
-          </div>
-
-        </DragDropProvider>
-
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+  if (columnOrder.length == 0) return (
+    <EmptyState board={board} promptCreateColumn={promptCreateColumn} />
   )
-  return <EmptyState board={board} promptCreateColumn={promptCreateColumn} />
+
+  const sensors = [
+    PointerSensor.configure({
+      activationConstraints: [
+        new PointerActivationConstraints.Delay({ value: 200, tolerance: 10 }),
+        new PointerActivationConstraints.Distance({ value: 10 })
+      ],
+    }),
+  ]
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { source } = event.operation;
+    if (source?.type != 'task') return;
+    updateLocal((s) => ({ ...s, taskOrder: move(taskOrder, event) }));
+  }
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { source } = event.operation;
+    // TODO: atualizar no back as posições
+    if (event.canceled || source?.type != 'column') return;
+    updateLocal((s) => ({ ...s, columnOrder: move(columnOrder, event) }));
+  }
+
+  return (
+    <ScrollArea className="h-full mt-6 mb-2">
+      <DragDropProvider
+        sensors={sensors}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="flex flex-row w-full max-h-200 h-fit max-w-full pl-6 gap-x-6">
+          {columnOrder.map((columnId, ci) => (
+            <Column
+              key={columnId}
+              index={ci}
+              column={columns[columnId]}
+              promptDelete={() => promptDeleteColumn(columns[columnId])}
+            >
+              {taskOrder[columnId].map((taskId, ti) => (
+                <TaskTile
+                  column={columnId}
+                  index={ti}
+                  key={taskId}
+                  task={tasks[taskId]}
+                />
+              ))}
+            </Column>
+          ))}
+
+          <div className="min-w-40 h-65 group/add-column -translate-x-3">
+            <Button title="Add column" onClick={promptCreateColumn} variant="ghost" size='icon-lg' className="group-hover/add-column:opacity-100 group-hover/add-column:w-15 h-40 opacity-0 overflow-hidden w-0">
+              <PlusIcon />
+            </Button>
+          </div>
+        </div>
+
+      </DragDropProvider>
+
+      <ScrollBar orientation="horizontal" />
+    </ScrollArea>
+  )
 }
 
 function Column({ column, index, promptDelete, children }: { column: Column, index: number, promptDelete: VoidFunction, children: React.ReactNode }) {
   const { ref, handleRef } = useSortable({
-    id: column.id, index, type: 'column', accept: ['column', 'task'], collisionPriority: CollisionPriority.Low,
+    id: column.id, index, type: 'column', accept: ['column', 'task'], collisionPriority: CollisionPriority.Low
   })
 
   return (
@@ -115,11 +135,11 @@ function Column({ column, index, promptDelete, children }: { column: Column, ind
         </ContextMenuTrigger>
         <ContextMenuContent>
           <ContextMenuItem>
-            <EditIcon icon-data="inline"/> 
+            <EditIcon icon-data="inline" />
             Edit
           </ContextMenuItem>
           <ContextMenuItem onClick={promptDelete} variant="destructive">
-            <TrashIcon icon-data="inline"/> 
+            <TrashIcon icon-data="inline" />
             Delete
           </ContextMenuItem>
         </ContextMenuContent>
@@ -132,20 +152,24 @@ function Column({ column, index, promptDelete, children }: { column: Column, ind
             {children}
           </div>
         </ScrollArea>
-        <Separator />
-        <div className="p-3">
-          <Button title="Add task" variant="ghost" size='lg' className="group-hover/column:opacity-100 group-hover/column:h-12 h-0 opacity-0 overflow-hidden w-full">
-            <PlusIcon className="h-7 w-7" />
-          </Button>
+        <div className="grid grid-rows-[0fr] grid-cols-1 group-hover/column:grid-rows-[1fr] transition-all">
+          <div className="min-h-0 overflow-hidden">
+            <Separator />
+            <div className="p-3">
+              <Button title="Add task" variant="ghost" size='lg' className="group-hover/column:opacity-100 opacity-0 overflow-hidden w-full">
+                <PlusIcon className="h-7 w-7" />
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   )
 }
 
-function TaskTile({task, index, column}: {task: Task, index: number, column: string}) {
-  const { ref } = useSortable({id: task.id, index, type: "task", accept: "task", group: column})
-  
+function TaskTile({ task, index, column }: { task: Task, index: number, column: string }) {
+  const { ref } = useSortable({ id: task.id, index, type: "task", accept: "task", group: column })
+
   return (
     <div ref={ref} className="w-full h-20 bg-accent border border-border rounded-xl p-3">
       <h4>
@@ -155,7 +179,7 @@ function TaskTile({task, index, column}: {task: Task, index: number, column: str
   )
 }
 
-function EmptyState({board, promptCreateColumn}: {board: Board, promptCreateColumn: () => void}) {
+function EmptyState({ board, promptCreateColumn }: { board: Board, promptCreateColumn: () => void }) {
   return (
     <Empty className="bg-muted/30 rounded-none">
       <EmptyHeader>
