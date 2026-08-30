@@ -41,7 +41,6 @@ async fn post_task(
     State(state): State<AppState>,
     Json(payload): Json<TaskCreationPayload>
 ) -> Result<StatusCode, StatusCode> {
-    dbg!("Post Task");
     services::task::post(&state.pool, payload).await.map_err(|_| StatusCode::BAD_REQUEST)
     .map(|_| StatusCode::CREATED)
 }

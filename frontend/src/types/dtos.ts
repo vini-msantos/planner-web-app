@@ -33,8 +33,8 @@ export type TaskPatchPayload = {
   title?: string
   description?: string
   column_id?: string,
-  update_date: boolean,
-  due_date?: Date
+  update_due_date: boolean,
+  due_date?: string,
   position?: number
 }
 

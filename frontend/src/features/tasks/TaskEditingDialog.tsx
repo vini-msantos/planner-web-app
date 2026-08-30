@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -8,16 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
 import useDialogStore from "@/store/useDialogStore";
 import useTaskStore from "@/store/useTaskStore";
-import type { Column } from "@/types/models";
 import { format } from "date-fns";
 import { XIcon } from "lucide-react";
-import { useState } from "react";
-
-export type TaskCreationDialogData = {
-  onCreate?: () => void,
-  column: Column,
-  position: number,
-}
+import { useEffect, useState } from "react";
 
 type FormSchema = {
   name: string,
@@ -26,29 +19,32 @@ type FormSchema = {
 
 export default function TaskCreationDialog() {
   const { active, closeDialog } = useDialogStore()
-  const createTask = useTaskStore(s => s.createTask)
+  const patchTask = useTaskStore(s => s.patchTask)
   const [dueDate, setDate] = useState<Date>()
 
+  useEffect(() => {
+    if (active.state == 'editTask' && active.task.due_date) {
+      setDate(new Date(active.task.due_date))
+    }
+  }, [active])
+
   const handleSubmit = async (event: React.SubmitEvent<HTMLFormElement>) => {
-    if (active.state != 'createTask') return
+    if (active.state != 'editTask') return
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const form = Object.fromEntries(formData.entries()) as unknown as FormSchema;
-    const id = crypto.randomUUID()
 
-    const result = await createTask({
+    console.log(dueDate)
+    const result = await patchTask(active.task.id, {
       ...form,
-      column_id: active.data.column.id,
-      position: active.data.position,
+      update_due_date: true,
       due_date: dueDate?.toISOString(),
-      id,
     })
     if (result.isOk) {
       toast.add({
         type: 'success',
-        description: `Task '${form.name}' created.`
+        description: `Task '${active.task.name}' edited.`
       })
-      active.data.onCreate?.()
       return closeDialog()
     }
     if (result.error == 'invalidName') {
@@ -59,41 +55,41 @@ export default function TaskCreationDialog() {
     }
     toast.add({
       type: 'error',
-      description: `Could not create task '${form.name}'`
+      description: `Could not edit task '${active.task.name}'`
     })
   }
 
-  if (active.state != 'createTask') return <></>
+  if (active.state != 'editTask') return <></>
   return (
-    <Dialog open={active.state == 'createTask'} onOpenChange={(open) => !open && closeDialog()}>
+    <Dialog open={active.state == 'editTask'} onOpenChange={(open) => !open && closeDialog()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-center text-base font-bold">Creating a new task</DialogTitle>
-          <DialogDescription>Tasks reside in columns and allow you to track pending activities.</DialogDescription>
+          <DialogTitle className="text-center text-base font-bold">Editing '{active.task.name}'</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <FieldGroup>
             <Field >
               <FieldLabel htmlFor="name">Name</FieldLabel>
-              <Input minLength={3} maxLength={100} id="name" name="name" type="text" autoComplete={"off"} placeholder="Rest api in rust" required />
+              <Input minLength={3} maxLength={40} id="name" name="name" type="text" autoComplete={"off"} placeholder={active.task.name} defaultValue={active.task.name} required />
             </Field>
             <Field >
               <FieldLabel htmlFor="description">Description</FieldLabel>
-              <Textarea maxLength={180} id="description" name="description" autoComplete={"off"} placeholder="Improve my rust skills by making a rest api." />
+              <Textarea maxLength={180} id="description" name="description" autoComplete={"off"} placeholder={active.task.description} defaultValue={active.task.description} />
             </Field>
 
             <Field>
               <FieldLabel htmlFor="due-date">Due date</FieldLabel>
               <Popover>
-                <PopoverTrigger render={
-                  <Button variant="outline" id="due-date" className="justify-start font-normal">
-                    {dueDate ? format(dueDate, "PPP") : <span className="text-muted-foreground">Select a date or leave empty</span>}
-                  </Button>
-                } />
-                {dueDate && <Button title="Remove due date" className="w-7 h-7 ml-2" variant="ghost" onClick={() => setDate(undefined)}>
-                  <XIcon className="stroke-muted-foreground" />
-                </Button>}
-
+                <div className="flex flex-row items-center">
+                  <PopoverTrigger render={
+                    <Button variant="outline" id="due-date" className="justify-start font-normal grow">
+                      {dueDate ? format(dueDate, "PPP") : <span className="text-muted-foreground">Select a date or leave empty</span>}
+                    </Button>
+                  } />
+                  {dueDate && <Button title="Remove due date" className="w-7 h-7 ml-2" variant="ghost" onClick={() => setDate(undefined)}>
+                    <XIcon className="stroke-muted-foreground" />
+                  </Button>}
+                </div>
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
@@ -107,7 +103,7 @@ export default function TaskCreationDialog() {
 
             <DialogFooter>
               <Button variant={'outline'} onClickCapture={() => closeDialog()}>Cancel</Button>
-              <Button type="submit">Create task</Button>
+              <Button type="submit">Save changes</Button>
             </DialogFooter>
           </FieldGroup>
         </form>

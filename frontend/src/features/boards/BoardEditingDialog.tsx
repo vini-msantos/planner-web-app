@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,7 +28,7 @@ export default function BoardEditingDialog() {
     if (result.error == 'invalidName') {
       return toast.add({
         type: 'warning',
-        description: `${data.name} Board name is invalid or already used.`
+        description: `${data.name} Board name is invalid or already in use.`
       })
     }
     toast.add({
@@ -43,17 +43,16 @@ export default function BoardEditingDialog() {
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="text-center text-base font-bold">Editing '{active.board.name}'</DialogTitle>
-          <DialogDescription>You can create boards to organize your tasks in a column oriented workflow.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <FieldGroup>
             <Field >
               <FieldLabel htmlFor="name">Name</FieldLabel>
-              <Input defaultValue={active.board.name} minLength={3} maxLength={40} id="name" name="name" type="text" autoComplete={"off"} placeholder="My amazing board" required />
+              <Input defaultValue={active.board.name} placeholder={active.board.name} minLength={3} maxLength={40} id="name" name="name" type="text" autoComplete={"off"} required />
             </Field>
             <Field >
               <FieldLabel htmlFor="description">Description</FieldLabel>
-              <Textarea defaultValue={active.board.description} className="min-h-25" maxLength={180} id="description" name="description" autoComplete={"off"} placeholder="A place to put all my great ideas." />
+              <Textarea defaultValue={active.board.description} placeholder={active.board.description} className="min-h-25" maxLength={180} id="description" name="description" autoComplete={"off"} />
             </Field>
             <DialogFooter>
               <Button variant={'outline'} onClickCapture={() => closeDialog()}>Cancel</Button>

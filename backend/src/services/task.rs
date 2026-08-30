@@ -14,6 +14,7 @@ pub async fn get(pool: &SqlitePool) -> anyhow::Result<HashMap<TaskId, Task>> {
 }
 
 pub async fn patch(pool: &SqlitePool, id: &str, payload: TaskPatchPayload) -> anyhow::Result<()> {
+    dbg!(&payload);
     sqlx::query!(
         r#"
         UPDATE tasks SET
@@ -39,7 +40,6 @@ pub async fn patch(pool: &SqlitePool, id: &str, payload: TaskPatchPayload) -> an
 }
 
 pub async fn post(pool: &SqlitePool, payload: TaskCreationPayload) -> anyhow::Result<()> {
-    dbg!(&payload.due_date);
     query!(
         r#"
         INSERT INTO tasks (id, name, description, due_date, position, column_id)

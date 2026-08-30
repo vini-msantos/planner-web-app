@@ -37,7 +37,7 @@ export default function BoardCreationDialog() {
     if (result.error == 'invalidName') {
       return toast.add({
         type: 'warning',
-        description: `'${data.name}' is invalid or already used.`
+        description: `'${data.name}' is invalid or already in use.`
       })
     }
     toast.add({

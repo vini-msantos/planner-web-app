@@ -11,7 +11,7 @@ import type { Board } from "@/types/models";
 import { slugify } from "@/utils/name_utils";
 
 export type ColumnCreationDialogData = {
-  onCreate: () => void,
+  onCreate?: () => void,
   board: Board,
   position: number,
 }
@@ -45,13 +45,13 @@ export default function ColumnCreationDialog() {
         type: 'success',
         description: `Column '${form.name}' created.`
       })
-      active.data.onCreate()
+      active.data.onCreate?.()
       return closeDialog()
     }
     if (result.error == 'invalidName') {
       return toast.add({
         type: 'warning',
-        description: `'${form.name}' is invalid or already used.`
+        description: `'${form.name}' is invalid or already in use.`
       })
     }
     toast.add({
@@ -81,13 +81,13 @@ export default function ColumnCreationDialog() {
             <FieldLabel htmlFor="completes_tasks">
               <Field orientation='horizontal'>
                 <FieldContent>
-                <FieldTitle>Completes tasks</FieldTitle>
-                <FieldDescription>Whether the column should mark the tasks inside it as completed.</FieldDescription>
+                  <FieldTitle>Completes tasks</FieldTitle>
+                  <FieldDescription>Whether the column should mark the tasks inside it as completed.</FieldDescription>
                 </FieldContent>
-                <Switch id="completes_tasks" name="completes_tasks"/>
+                <Switch id="completes_tasks" name="completes_tasks" />
               </Field>
             </FieldLabel>
-              
+
             <DialogFooter>
               <Button variant={'outline'} onClickCapture={() => closeDialog()}>Cancel</Button>
               <Button type="submit">Create column</Button>

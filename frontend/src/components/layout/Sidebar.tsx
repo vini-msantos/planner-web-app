@@ -4,7 +4,7 @@ import { CalendarDays, CheckSquare, ChevronDown, Columns3, Home, PencilIcon, Pin
 import { NavLink } from "react-router"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible"
 import useAppSidebar from "@/hooks/useAppSidebar"
-import { ContextMenu, ContextMenuContent, ContextMenuGroup, ContextMenuItem, ContextMenuTrigger } from "../ui/context-menu"
+import { ContextMenu, ContextMenuContent, ContextMenuGroup, ContextMenuItem, ContextMenuLabel, ContextMenuTrigger } from "../ui/context-menu"
 import type { Board } from "@/types/models"
 
 export default function AppSidebar() {
@@ -113,6 +113,7 @@ function BoardTile({ board, handlePin, handleEdit, handleDelete }: { board: Boar
         </ContextMenuTrigger>
         <ContextMenuContent>
           <ContextMenuGroup>
+            <ContextMenuLabel>Board</ContextMenuLabel>
             <ContextMenuItem onClick={handleEdit}>
               <PencilIcon />
               Edit
