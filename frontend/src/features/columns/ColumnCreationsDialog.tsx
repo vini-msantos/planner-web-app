@@ -19,7 +19,6 @@ export type ColumnCreationDialogData = {
 type FormSchema = {
   name: string,
   description: string,
-  routes_to?: string,
   completes_tasks: string,
 }
 

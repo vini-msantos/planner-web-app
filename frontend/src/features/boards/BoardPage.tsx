@@ -1,62 +1,45 @@
 import { Button } from "@/components/ui/button";
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
-import type { Board, Column, Task } from "@/types/models";
-import { EditIcon, GhostIcon, PlusIcon, TrashIcon } from "lucide-react";
+import type { Board, Task } from "@/types/models";
+import { GhostIcon, PlusIcon } from "lucide-react";
 import { useSortable } from "@dnd-kit/react/sortable"
-import useBoard, { type UseBoardData } from "@/hooks/useBoard";
+import useBoard, { type UseBoard } from "@/hooks/useBoard";
 import { PointerSensor } from "@dnd-kit/react";
 import { PointerActivationConstraints } from "@dnd-kit/dom";
 import { DragDropProvider } from "@dnd-kit/react"
+import { DndContext, pointerWithin } from "@dnd-kit/core"
 import { move } from "@dnd-kit/helpers"
-import { CollisionPriority, type DragEndEvent, type DragOverEvent } from "@dnd-kit/abstract"
-import "./board_page.css"
+import { type DragEndEvent, type DragOverEvent } from "@dnd-kit/abstract"
+import BoardColumn from "../columns/Column";
+import TaskCard from "../tasks/Task";
+import { useNavigate } from "react-router";
 
 
 export default function BoardPage() {
   const fetch = useBoard()
+  const navigate = useNavigate()
+  if (fetch.state == 'error') navigate("/boards")
 
   return (
     <div className="flex flex-col h-screen w-full">
       {fetch.state == 'loading' && <Spinner className="w-10 h-10 m-auto" />}
-      {fetch.state == 'ok' &&
-        <BoardDisplay
-          board={fetch.board}
-          columns={fetch.columns}
-          columnOrder={fetch.columnOrder}
-          tasks={fetch.tasks}
-          taskOrder={fetch.taskOrder}
-          promptCreateColumn={fetch.promptCreateColumn}
-          promptDeleteColumn={fetch.promptDeleteColumn}
-          updateLocal={fetch.updateLocal}
-        />
-      }
+      {fetch.state == 'ok' && <BoardDisplay data={{...fetch}} />}
     </div>
   )
 }
 
-function BoardDisplay({ board, columnOrder, columns, taskOrder, tasks, promptCreateColumn, promptDeleteColumn, updateLocal }: {
-  board: Board,
-  columns: Record<string, Column>,
-  columnOrder: string[],
-  tasks: Record<string, Task>,
-  taskOrder: Record<string, string[]>,
-  promptCreateColumn: () => void,
-  promptDeleteColumn: (column: Column) => void,
-  updateLocal: (func: (prevState: UseBoardData) => UseBoardData) => void,
-}) {
+function BoardDisplay({ data }: { data: UseBoard }) {
+  const { columnOrder, taskOrder, tasks, columns, board } = data
   if (columnOrder.length == 0) return (
-    <EmptyState board={board} promptCreateColumn={promptCreateColumn} />
+    <EmptyState board={board} promptCreateColumn={data.promptCreateColumn} />
   )
 
   const sensors = [
     PointerSensor.configure({
       activationConstraints: [
-        new PointerActivationConstraints.Delay({ value: 200, tolerance: 10 }),
-        new PointerActivationConstraints.Distance({ value: 10 })
+        new PointerActivationConstraints.Distance({ value: 12 }),
       ],
     }),
   ]
@@ -64,119 +47,64 @@ function BoardDisplay({ board, columnOrder, columns, taskOrder, tasks, promptCre
   const handleDragOver = (event: DragOverEvent) => {
     const { source } = event.operation;
     if (source?.type != 'task') return;
-    updateLocal((s) => ({ ...s, taskOrder: move(taskOrder, event) }));
+    data.updateTasksLocally(move(taskOrder, event));
   }
   const handleDragEnd = (event: DragEndEvent) => {
     const { source } = event.operation;
-    // TODO: atualizar no back as posições
-    if (event.canceled || source?.type != 'column') return;
-    updateLocal((s) => ({ ...s, columnOrder: move(columnOrder, event) }));
+    if (!source) return
+    if (event.canceled) return data.revertLocalChanges()
+
+    const id = source.id.toString()
+    if (source?.type == 'column') data.moveColumn(id, move(columnOrder, event))
+    else if (source?.type == 'task') data.moveTask(id, move(taskOrder, event)) 
   }
 
   return (
     <ScrollArea className="h-full mt-6 mb-2">
-      <DragDropProvider
-        sensors={sensors}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="flex flex-row w-full max-h-200 h-fit max-w-full pl-6 gap-x-6">
-          {columnOrder.map((columnId, ci) => (
-            <Column
-              key={columnId}
-              index={ci}
-              column={columns[columnId]}
-              promptDelete={() => promptDeleteColumn(columns[columnId])}
-            >
-              {taskOrder[columnId].map((taskId, ti) => (
-                <TaskTile
-                  column={columnId}
-                  index={ti}
-                  key={taskId}
-                  task={tasks[taskId]}
-                />
-              ))}
-            </Column>
-          ))}
+      <DndContext collisionDetection={pointerWithin}>
+        <DragDropProvider
+          sensors={sensors}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex flex-row w-full max-h-200 h-fit max-w-full pl-6 gap-x-6">
+            {columnOrder.map((columnId, ci) => (
+              <BoardColumn
+                key={columnId}
+                index={ci}
+                column={columns[columnId]}
+                promptDelete={() => data.promptDeleteColumn(columns[columnId])}
+                promptCreateTask={() => data.promptCreateTask(columns[columnId])}
+              >
+                {data.taskOrder[columnId].map((taskId, ti) => (
+                  <BoardTask
+                    column={columnId}
+                    index={ti}
+                    key={taskId}
+                    task={tasks[taskId]}
+                  />
+                ))}
+              </BoardColumn>
+            ))}
 
-          <div className="min-w-40 h-65 group/add-column -translate-x-3">
-            <Button title="Add column" onClick={promptCreateColumn} variant="ghost" size='icon-lg' className="group-hover/add-column:opacity-100 group-hover/add-column:w-15 h-40 opacity-0 overflow-hidden w-0">
-              <PlusIcon />
-            </Button>
+            <div className="min-w-40 h-65 group/add-column -translate-x-3">
+              <Button title="Add column" onClick={data.promptCreateColumn} variant="ghost" size='icon-lg' className="group-hover/add-column:opacity-100 group-hover/add-column:w-15 h-40 opacity-0 overflow-hidden w-0">
+                <PlusIcon />
+              </Button>
+            </div>
           </div>
-        </div>
-
-      </DragDropProvider>
+        </DragDropProvider>
+      </DndContext>
 
       <ScrollBar orientation="horizontal" />
     </ScrollArea>
   )
 }
 
-function Column({ column, index, promptDelete, children }: { column: Column, index: number, promptDelete: VoidFunction, children: React.ReactNode }) {
-  const { ref, handleRef } = useSortable({
-    id: column.id, index, type: 'column', accept: ['column', 'task'], collisionPriority: CollisionPriority.Low
-  })
-
-  return (
-    <div ref={ref} className="min-w-65 w-65 h-fit group/column">
-      <ContextMenu>
-        <ContextMenuTrigger>
-          <div ref={handleRef} className="bg-accent w-full h-fit p-4 pr-0 flex flex-col max-h-full rounded-t-xl border border-b-0 border-border">
-            <div className=" flex flex-row justify-between">
-              <h3 className="font-bold text-xl tracking-wide">
-                {column.name}
-              </h3>
-            </ div>
-            <p className="text-xs leading-tight text-muted-foreground pr-4">
-              {column.description}
-            </p>
-          </div>
-        </ContextMenuTrigger>
-        <ContextMenuContent>
-          <ContextMenuItem>
-            <EditIcon icon-data="inline" />
-            Edit
-          </ContextMenuItem>
-          <ContextMenuItem onClick={promptDelete} variant="destructive">
-            <TrashIcon icon-data="inline" />
-            Delete
-          </ContextMenuItem>
-        </ContextMenuContent>
-      </ContextMenu>
-
-      <div className="group/list bg-card w-full h-fit rounded-b-xl border border-t-0 border-border">
-        <Separator />
-        <ScrollArea className="h-full max-h-140 p-3 overflow-scroll column-scroll-area">
-          <div className="space-y-3">
-            {children}
-          </div>
-        </ScrollArea>
-        <div className="grid grid-rows-[0fr] grid-cols-1 group-hover/column:grid-rows-[1fr] transition-all">
-          <div className="min-h-0 overflow-hidden">
-            <Separator />
-            <div className="p-3">
-              <Button title="Add task" variant="ghost" size='lg' className="group-hover/column:opacity-100 opacity-0 overflow-hidden w-full">
-                <PlusIcon className="h-7 w-7" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function TaskTile({ task, index, column }: { task: Task, index: number, column: string }) {
+function BoardTask({ task, index, column }: { task: Task, index: number, column: string }) {
   const { ref } = useSortable({ id: task.id, index, type: "task", accept: "task", group: column })
 
-  return (
-    <div ref={ref} className="w-full h-20 bg-accent border border-border rounded-xl p-3">
-      <h4>
-        {task.name}
-      </h4>
-    </div>
-  )
+  return <TaskCard task={task} ref={ref} />
 }
 
 function EmptyState({ board, promptCreateColumn }: { board: Board, promptCreateColumn: () => void }) {

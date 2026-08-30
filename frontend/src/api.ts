@@ -1,4 +1,4 @@
-import type { Bootstrap, ColumnRoutingPayload, TaskMovePayload } from "./types/dtos"
+import type { Bootstrap } from "./types/dtos"
 import axios, { type AxiosInstance } from "axios"
 
 const apiUrl = "http://127.0.0.1:3001"
@@ -43,16 +43,16 @@ export async function fetchBootstrap(): Promise<Bootstrap | 'error'> {
   } catch { return 'error' }
 }
 
-export async function routeColumn(id: string, payload: ColumnRoutingPayload): Promise<'ok' | 'error'> {
+export async function dumpColumn(id: string, to: string): Promise<'ok' | 'error'> {
   try {
-    const status = (await apiClient.post(`${apiUrl}/columns/${id}/edit-route`, payload)).status
+    const status = (await apiClient.post(`${apiUrl}/columns/${id}/dump`, {to})).status
     return status == 200 ? 'ok' : 'error'
   } catch { return 'error' }
 }
 
-export async function moveTask(id: string, payload: TaskMovePayload): Promise<'ok' | 'error'> {
+export async function dumpTask(id: string, to_column: string): Promise<'ok' | 'error'> {
   try {
-    const status = (await apiClient.post(`${apiUrl}/tasks/${id}/move`, payload)).status
+    const status = (await apiClient.post(`${apiUrl}/tasks/${id}/dump`, {to_column})).status
     return status == 200 ? 'ok' : 'error'
   } catch { return 'error' }
 } 

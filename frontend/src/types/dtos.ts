@@ -12,20 +12,19 @@ export type Bootstrap = {
 export type BoardDto = {
   board: Board
   columns: Record<string, Column>
-  routed_columns: Record<string, Column>
   tasks: Record<string, Task>
 }
 
 export type TaskCreationPayload = {
   id: string
-  title: string
+  name: string
   description: string
-  due_date?: Date
+  due_date?: string
   position: number
   column_id: string
 }
 
-export type TaskMovePayload = {
+export type TaskDumpPayload = {
   to_column: string
   to_position: number
 }
@@ -33,7 +32,9 @@ export type TaskMovePayload = {
 export type TaskPatchPayload = {
   title?: string
   description?: string
-  due_date?: Date | null
+  column_id?: string,
+  update_date: boolean,
+  due_date?: Date
   position?: number
 }
 
@@ -42,11 +43,14 @@ export type ColumnPatchPayload = {
   description?: string,
   position?: number
   completes_tasks?: boolean
-  tasks_hidden?: boolean
 }
 
-export type ColumnRoutingPayload = {
-  routes_to: string | null
+export type ColumnDumpingPayload = {
+  to: string
+}
+
+export type TaskDumpingPayload = {
+  to_column: string
 }
 
 export type ColumnCreationPayload = {
@@ -55,7 +59,6 @@ export type ColumnCreationPayload = {
   position: number
   description: string,
   board_id: string
-  routes_to?: string
   completes_tasks: boolean
 }
 

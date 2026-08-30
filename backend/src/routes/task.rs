@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use axum::{Json, Router, extract::{Path, State}, http::StatusCode, routing::{delete, get, patch, post}};
 
-use crate::{AppState, dtos::{TaskCreationPayload, TaskMovePayload, TaskPatchPayload}, models::{Task, TaskId}, services};
+use crate::{AppState, dtos::{TaskCreationPayload, TaskDumpingPayload, TaskPatchPayload}, models::{Task, TaskId}, services};
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -10,7 +10,7 @@ pub fn router() -> Router<AppState> {
         .route("/", get(get_tasks))
         .route("/{id}", patch(patch_task))
         .route("/{id}", delete(delete_task))
-        .route("/{id}/move", post(move_task))
+        .route("/{id}/dump", post(dump_task))
 }
 
 async fn get_tasks(
@@ -41,15 +41,17 @@ async fn post_task(
     State(state): State<AppState>,
     Json(payload): Json<TaskCreationPayload>
 ) -> Result<StatusCode, StatusCode> {
+    dbg!("Post Task");
     services::task::post(&state.pool, payload).await.map_err(|_| StatusCode::BAD_REQUEST)
     .map(|_| StatusCode::CREATED)
 }
 
-async fn move_task(
+async fn dump_task(
     State(state): State<AppState>,
     Path(id): Path<TaskId>,
-    Json(payload): Json<TaskMovePayload>
+    Json(payload): Json<TaskDumpingPayload>
 ) -> Result<StatusCode, StatusCode> {
-    services::task::move_to(&state.pool, &id, payload).await.map_err(|_| StatusCode::BAD_REQUEST)
+    services::task::dump(&state.pool, &[id], &payload.to_column)
+    .await.map_err(|_| StatusCode::BAD_REQUEST)
     .map(|_| StatusCode::OK)
 }

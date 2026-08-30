@@ -5,7 +5,7 @@ import { toast } from "../ui/toast";
 
 export type DeleteDialogData = {
   name: string,
-  description: string,
+  description?: string,
   onConfirm: () => ApiResult<any, any>
 }
 
@@ -33,9 +33,11 @@ export default function DeleteDialog() {
       <AlertDialogContent size="default">
         <AlertDialogHeader >
           <AlertDialogTitle><strong className="text-lg">Delete '{active.data.name}'?</strong></AlertDialogTitle>
-          <AlertDialogDescription>
-            {active.data.description}
-          </AlertDialogDescription>
+          {active.data.description && 
+            <AlertDialogDescription>
+              {active.data.description}
+            </AlertDialogDescription>
+          }
         </AlertDialogHeader>
         <AlertDialogDescription>
           <strong className="text-xs">This action cannot be undone.</strong>

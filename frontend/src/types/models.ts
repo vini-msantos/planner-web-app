@@ -10,8 +10,6 @@ export type Column = {
     name: string,
     description: string,
     position: number,
-    routes_to?: string,
-    tasks_hidden: boolean,
     completes_tasks: boolean,
     board_id: string,
 }

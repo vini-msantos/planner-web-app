@@ -12,9 +12,7 @@ CREATE TABLE IF NOT EXISTS columns (
   name TEXT NOT NULL,
   description TEXT NOT NULL DEFAULT '',
   position REAL NOT NULL,
-  routes_to TEXT REFERENCES columns(id) ON DELETE SET NULL,
   completes_tasks BOOLEAN NOT NULL CHECK (completes_tasks IN (0, 1)),
-  tasks_hidden BOOLEAN NOT NULL CHECK (tasks_hidden IN (0, 1)),
   board_id TEXT NOT NULL REFERENCES boards(id) ON DELETE CASCADE
 );
 
@@ -50,7 +48,6 @@ CREATE TABLE IF NOT EXISTS routine_activities (
 );
 
 CREATE INDEX IF NOT EXISTS idx_tasks_column_id ON tasks(column_id) WHERE column_id IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_columns_routes_to ON columns(routes_to) WHERE routes_to IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_columns_board_id ON columns(board_id);
 CREATE INDEX IF NOT EXISTS idx_scheduled_starts_on ON scheduled_activities(starts_on);
 CREATE INDEX IF NOT EXISTS idx_scheduled_task_id ON scheduled_activities(task_id) WHERE task_id IS NOT NULL;

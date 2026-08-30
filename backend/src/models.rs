@@ -21,8 +21,6 @@ pub struct Column {
     pub name: String,
     pub description: String,
     pub position: f64,
-    pub routes_to: Option<ColumnId>,
-    pub tasks_hidden: bool,
     pub completes_tasks: bool,
     pub board_id: BoardId,
 }

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::models::{Board, BoardId, Column, ColumnId, Task, TaskId};
@@ -9,7 +9,6 @@ use crate::models::{Board, BoardId, Column, ColumnId, Task, TaskId};
 pub struct BoardDTO {
     pub board: Board,
     pub columns: HashMap<ColumnId, Column>,
-    pub routed_columns: HashMap<ColumnId, Column>,
     pub tasks: HashMap<TaskId, Task>,
 }
 
@@ -18,22 +17,24 @@ pub struct TaskCreationPayload {
     pub id: TaskId,
     pub name: String,
     pub description: String,
-    pub due_date: Option<NaiveDateTime>,
+    pub due_date: Option<DateTime<Utc>>,
     pub position: f64,
     pub column_id: ColumnId,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct TaskMovePayload {
+pub struct TaskDumpingPayload {
     pub to_column: ColumnId,
-    pub to_position: f64,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct TaskPatchPayload {
     pub name: Option<String>,
     pub description: Option<String>,
-    pub due_date: Option<Option<NaiveDateTime>>,
+    #[serde(default)]
+    pub update_due_date: bool,
+    pub due_date: Option<DateTime<Utc>>,
+    pub column_id: Option<String>,
     pub position: Option<f64>
 }
 
@@ -43,12 +44,6 @@ pub struct ColumnPatchPayload {
     pub position: Option<f64>,
     pub description: Option<String>,
     pub completes_tasks: Option<bool>,
-    pub tasks_hidden: Option<bool>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct ColumnRoutingPayload {
-    pub routes_to: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -58,8 +53,12 @@ pub struct ColumnCreationPayload {
     pub description: String,
     pub position: f64,
     pub board_id: BoardId,
-    pub routes_to: Option<ColumnId>,
     pub completes_tasks: bool,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ColumnDumpingPayload {
+    pub to: ColumnId
 }
 
 #[derive(Debug, Deserialize)]
@@ -84,7 +83,9 @@ pub struct RoutinePatchPayload {
 #[derive(Debug, Deserialize)]
     pub struct ScheduledActivityPatchPayload {
     pub name: Option<String>,
-    pub task_id: Option<Option<TaskId>>,
-    pub starts_on: Option<NaiveDateTime>,
+    #[serde(default)]
+    pub update_task_id: bool,
+    pub task_id: Option<TaskId>,
+    pub starts_on: Option<DateTime<Utc>>,
     pub duration_minutes: Option<i64>,
 }

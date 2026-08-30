@@ -5,7 +5,8 @@ import { SidebarInset, SidebarProvider } from "../ui/sidebar";
 import DeleteDialog from "./DeleteDialog";
 import { Toaster } from "../ui/toast";
 import BoardEditingDialog from "@/features/boards/BoardEditingDialog";
-import ColumnCreationDialog from "@/features/boards/ColumnCreationsDialog";
+import ColumnCreationDialog from "@/features/columns/ColumnCreationsDialog";
+import TaskCreationDialog from "@/features/tasks/TaskCreationsDialog";
 
 export default function Shell() {
   return (
@@ -19,6 +20,7 @@ export default function Shell() {
           <BoardCreationDialog />
           <BoardEditingDialog />
           <ColumnCreationDialog />
+          <TaskCreationDialog />
           <DeleteDialog />
           <Toaster />
         </div>

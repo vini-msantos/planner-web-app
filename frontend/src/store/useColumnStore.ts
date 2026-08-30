@@ -24,7 +24,6 @@ const useColumnStore = create<ColumnStore>()(
     const fetchColumns = async () => {
       const result = await getRequest<Record<string, Column>>("columns")
       if (result == 'error') return set({error: 'timedOut'})
-      console.log(result)
       set({columns: result})
     }
 

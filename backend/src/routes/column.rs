@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use axum::{Json, Router, extract::{Path, State}, http::StatusCode, routing::{delete, get, patch, post}};
 
-use crate::{AppState, dtos::{ColumnCreationPayload, ColumnPatchPayload, ColumnRoutingPayload}, models::{Column, ColumnId}, services};
+use crate::{AppState, dtos::{ColumnCreationPayload, ColumnDumpingPayload, ColumnPatchPayload}, models::{Column, ColumnId}, services};
 
 pub fn router() -> Router<crate::AppState> {
     Router::new()
@@ -10,7 +10,7 @@ pub fn router() -> Router<crate::AppState> {
         .route("/", get(get_columns))
         .route("/{id}", delete(delete_column))
         .route("/{id}", patch(patch_column))
-        .route("/{id}/edit-route", post(edit_column_routes_to))
+        .route("/{id}/dump", post(dump_column))
 }
 
 async fn get_columns(
@@ -45,11 +45,11 @@ async fn patch_column(
     .map(|_| StatusCode::OK)
 }
 
-async fn edit_column_routes_to(
+async fn dump_column(
     State(state): State<AppState>,
     Path(id): Path<ColumnId>,
-    Json(payload): Json<ColumnRoutingPayload>
+    Json(payload): Json<ColumnDumpingPayload>
 ) -> Result<StatusCode, StatusCode> {
-    services::column::set_routing(&state.pool, &id, payload).await.map_err(|_| StatusCode::BAD_REQUEST)
+    services::column::dump(&state.pool, &id, payload).await.map_err(|_| StatusCode::BAD_REQUEST)
     .map(|_| StatusCode::OK)
 }

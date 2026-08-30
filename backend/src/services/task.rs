@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
-use anyhow::bail;
-use sqlx::{SqlitePool, query, query_as, query_as_unchecked};
 
-use crate::dtos::{TaskCreationPayload, TaskMovePayload, TaskPatchPayload};
-use crate::models::{Column, Task, TaskId};
+use sqlx::{SqlitePool, query, query_as_unchecked};
+
+use crate::dtos::{TaskCreationPayload, TaskPatchPayload};
+use crate::models::{Task, TaskId};
 
 pub async fn get(pool: &SqlitePool) -> anyhow::Result<HashMap<TaskId, Task>> {
     let tasks = sqlx::query_as!(Task, r#"SELECT * FROM tasks;"#)
@@ -20,28 +20,26 @@ pub async fn patch(pool: &SqlitePool, id: &str, payload: TaskPatchPayload) -> an
             name = COALESCE($1, name),
             description = COALESCE($2, description),
             position = COALESCE($3, position),
+            column_id = COALESCE($4, column_id),
             due_date = CASE
-                WHEN $4 IS TRUE THEN $5
+                WHEN $5 IS TRUE THEN $6
                ELSE due_date
             END
-        WHERE id = $6;
+        WHERE id = $7;
         "#,
         &payload.name,
         &payload.description,
         &payload.position,
-        &payload.due_date.is_some(),
-        &payload.due_date.flatten(),
+        &payload.column_id,
+        &payload.update_due_date,
+        &payload.due_date,
         id,
     ).execute(pool).await?;
     Ok(())
 }
 
 pub async fn post(pool: &SqlitePool, payload: TaskCreationPayload) -> anyhow::Result<()> {
-    let routes_to_somewhere = query_as!(
-        Column, r#"SELECT * FROM columns WHERE id = $1;"#, &payload.column_id
-    ).fetch_one(pool).await?.routes_to.is_some();
-    if routes_to_somewhere { bail!("Can't add tasks to a column that routes to somewhere.") }
-
+    dbg!(&payload.due_date);
     query!(
         r#"
         INSERT INTO tasks (id, name, description, due_date, position, column_id)
@@ -62,30 +60,17 @@ pub async fn delete(pool: &SqlitePool, id: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub async fn move_to(pool: &SqlitePool, id: &str, payload: TaskMovePayload) -> anyhow::Result<()> {
-    let dest_col = query_as!(Column,
-        r#"SELECT * FROM columns WHERE id = $1;"#,
-        &payload.to_column
-    ).fetch_one(pool).await?;
+pub async fn dump(pool: &SqlitePool, ids: &[String], to_column: &str) -> anyhow::Result<()> {
+    let tail_pos = query_as_unchecked!(Task, r#"SELECT * FROM tasks WHERE column_id = $1;"#, to_column)
+        .fetch_all(pool).await?.iter()
+        .map(|t| t.position)
+        .fold(1000f64, |prev, curr| prev.max(curr));
     
-    let position = if let Some(routes_to) = &dest_col.routes_to {
-        query_as_unchecked!(Task, r#"SELECT * FROM tasks WHERE column_id = $1;"#, routes_to)
-            .fetch_all(pool).await?.iter()
-            .map(|t| t.position)
-            .fold(0.0, |acc, p| p.max(acc)) + 1000.0
-    } else { payload.to_position };
-
-    query!(
-        r#"
-        UPDATE tasks SET
-            column_id = COALESCE($1, $2),
-            position = $3
-        WHERE id = $4;
-        "#,
-        &dest_col.routes_to,
-        &dest_col.id,
-        position,
-        id
-    ).execute(pool).await?;
+    for (index, id) in ids.iter().enumerate() {
+        let position = tail_pos + index as f64 * 1000.0;
+        query!(r#"
+            UPDATE tasks SET position = $1, column_id = $2 WHERE id = $3;
+        "#, &position, &to_column, &id).execute(pool).await?;
+    }
     Ok(())
 }
