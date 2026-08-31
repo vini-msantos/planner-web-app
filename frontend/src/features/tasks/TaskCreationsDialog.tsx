@@ -87,14 +87,16 @@ export default function TaskCreationDialog() {
             <Field>
               <FieldLabel htmlFor="due-date">Due date</FieldLabel>
               <Popover>
-                <PopoverTrigger render={
-                  <Button variant="outline" id="due-date" className="justify-start font-normal">
-                    {dueDate ? format(dueDate, "PPP") : <span className="text-muted-foreground">Select a date or leave empty</span>}
-                  </Button>
-                } />
-                {dueDate && <Button title="Remove due date" className="w-7 h-7 ml-2" variant="ghost" onClick={() => setDate(undefined)}>
-                  <XIcon className="stroke-muted-foreground" />
-                </Button>}
+                <div className="flex flex-row items-center">
+                  <PopoverTrigger render={
+                    <Button variant="outline" id="due-date" className="justify-start font-normal">
+                      {dueDate ? format(dueDate, "PPP") : <span className="text-muted-foreground">Select a date or leave empty</span>}
+                    </Button>
+                  } />
+                  {dueDate && <Button title="Remove due date" className="ml-2" variant="ghost" size="icon" onClick={() => setDate(undefined)}>
+                    <XIcon className="stroke-muted-foreground" />
+                  </Button>}
+                </div>
 
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar

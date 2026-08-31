@@ -50,7 +50,7 @@ export default function BoardEditingDialog() {
     <Dialog open={active.state == 'editBoard'} onOpenChange={(open) => !open && closeDialog()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-center text-base font-bold">Editing '{active.board.name}'</DialogTitle>
+          <DialogTitle className="mx-4.5 text-center text-base font-bold">Editing '{active.board.name}'</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <FieldGroup>

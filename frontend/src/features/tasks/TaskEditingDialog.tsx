@@ -65,7 +65,7 @@ export default function TaskCreationDialog() {
     <Dialog open={active.state == 'editTask'} onOpenChange={(open) => !open && closeDialog()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-center text-base font-bold">Editing '{active.task.name}'</DialogTitle>
+          <DialogTitle className="mx-4.5 text-center text-base font-bold">Editing '{active.task.name}'</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <FieldGroup>
@@ -87,7 +87,7 @@ export default function TaskCreationDialog() {
                       {dueDate ? format(dueDate, "PPP") : <span className="text-muted-foreground">Select a date or leave empty</span>}
                     </Button>
                   } />
-                  {dueDate && <Button title="Remove due date" className="w-7 h-7 ml-2" variant="ghost" onClick={() => setDate(undefined)}>
+                  {dueDate && <Button title="Remove due date" className="ml-2" variant="ghost" size="icon" onClick={() => setDate(undefined)}>
                     <XIcon className="stroke-muted-foreground" />
                   </Button>}
                 </div>

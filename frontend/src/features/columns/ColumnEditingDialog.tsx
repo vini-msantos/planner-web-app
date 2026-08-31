@@ -54,7 +54,7 @@ export default function ColumnEditingDialog() {
     <Dialog open={active.state == 'editColumn'} onOpenChange={(open) => !open && closeDialog()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-center text-base font-bold">Editing '{active.column.name}'</DialogTitle>
+          <DialogTitle className="mx-4.5 text-center text-base font-bold">Editing '{active.column.name}'</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <FieldGroup>
