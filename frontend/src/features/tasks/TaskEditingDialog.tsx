@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
 import useDialogStore from "@/store/useDialogStore";
 import useTaskStore from "@/store/useTaskStore";
+import { formatLine, formatParagraph } from "@/utils/name_utils";
 import { format } from "date-fns";
 import { XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -23,8 +24,8 @@ export default function TaskCreationDialog() {
   const [dueDate, setDate] = useState<Date>()
 
   useEffect(() => {
-    if (active.state == 'editTask' && active.task.due_date) {
-      setDate(new Date(active.task.due_date))
+    if (active.state == 'editTask') {
+      setDate(active.task.due_date ? new Date(active.task.due_date) : undefined)
     }
   }, [active])
 
@@ -34,9 +35,9 @@ export default function TaskCreationDialog() {
     const formData = new FormData(event.currentTarget);
     const form = Object.fromEntries(formData.entries()) as unknown as FormSchema;
 
-    console.log(dueDate)
     const result = await patchTask(active.task.id, {
-      ...form,
+      name: formatLine(form.name),
+      description: formatParagraph(form.description),
       update_due_date: true,
       due_date: dueDate?.toISOString(),
     })
@@ -74,7 +75,7 @@ export default function TaskCreationDialog() {
             </Field>
             <Field >
               <FieldLabel htmlFor="description">Description</FieldLabel>
-              <Textarea maxLength={180} id="description" name="description" autoComplete={"off"} placeholder={active.task.description} defaultValue={active.task.description} />
+              <Textarea maxLength={180} id="description" name="description" autoComplete={"off"} placeholder={active.task.description} defaultValue={active.task.description} className="min-h-25 max-h-60"/>
             </Field>
 
             <Field>

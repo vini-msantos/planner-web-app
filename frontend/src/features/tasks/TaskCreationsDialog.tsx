@@ -9,6 +9,7 @@ import { toast } from "@/components/ui/toast";
 import useDialogStore from "@/store/useDialogStore";
 import useTaskStore from "@/store/useTaskStore";
 import type { Column } from "@/types/models";
+import { formatLine, formatParagraph } from "@/utils/name_utils";
 import { format } from "date-fns";
 import { XIcon } from "lucide-react";
 import { useState } from "react";
@@ -37,7 +38,8 @@ export default function TaskCreationDialog() {
     const id = crypto.randomUUID()
 
     const result = await createTask({
-      ...form,
+      name: formatLine(form.name),
+      description: formatParagraph(form.description),
       column_id: active.data.column.id,
       position: active.data.position,
       due_date: dueDate?.toISOString(),
@@ -79,7 +81,7 @@ export default function TaskCreationDialog() {
             </Field>
             <Field >
               <FieldLabel htmlFor="description">Description</FieldLabel>
-              <Textarea maxLength={180} id="description" name="description" autoComplete={"off"} placeholder="Improve my rust skills by making a rest api." />
+              <Textarea maxLength={180} id="description" name="description" autoComplete={"off"} placeholder="Improve my rust skills by making a rest api." className="min-h-25 max-h-60"/>
             </Field>
 
             <Field>

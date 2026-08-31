@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
 import useBoardStore from "@/store/useBoardStore";
 import useDialogStore from "@/store/useDialogStore";
-import { slugify } from "@/utils/name_utils";
+import { formatLine, formatParagraph, slugify } from "@/utils/name_utils";
 import { useNavigate } from "react-router";
 
 type FormSchema = {
@@ -24,7 +24,12 @@ export default function BoardCreationDialog() {
     const formData = new FormData(event.currentTarget);
     const data = Object.fromEntries(formData.entries()) as unknown as FormSchema;
     const id = slugify(data.name)
-    const result = await createBoard({ ...data, id })
+    const result = await createBoard({
+      id,
+      name: formatLine(data.name),
+      description: formatParagraph(data.description),
+    })
+
     if (result.isOk) {
       toast.add({
         type: 'success',
@@ -61,7 +66,7 @@ export default function BoardCreationDialog() {
             </Field>
             <Field >
               <FieldLabel htmlFor="description">Description</FieldLabel>
-              <Textarea className="min-h-25" maxLength={180} id="description" name="description" autoComplete={"off"} placeholder="A place to put all my great ideas." />
+              <Textarea className="min-h-25 max-h-60" maxLength={180} id="description" name="description" autoComplete={"off"} placeholder="A place to put all my great ideas." />
             </Field>
             <DialogFooter>
               <Button variant={'outline'} onClickCapture={() => closeDialog()}>Cancel</Button>

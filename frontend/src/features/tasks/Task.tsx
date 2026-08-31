@@ -1,8 +1,27 @@
 import { Badge } from "@/components/ui/badge"
 import { ContextMenu, ContextMenuContent, ContextMenuGroup, ContextMenuItem, ContextMenuLabel, ContextMenuTrigger } from "@/components/ui/context-menu"
 import type { Task } from "@/types/models"
-import { formatDistance } from "date-fns"
+import { formatDate, formatDistance } from "date-fns"
 import { CalendarDaysIcon, CheckIcon, PencilIcon, TextIcon, TrashIcon } from "lucide-react"
+import { useSearchParams } from "react-router"
+
+export function DoneBadge() {
+  return (
+    <Badge variant="secondary" className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300 select-none">
+      <CheckIcon />
+      Done
+    </Badge>
+  )
+}
+
+export function DueDateBadge({dueDate}: {dueDate: Date}) {
+  return (
+    <Badge title={formatDate(dueDate, "PPPP")} variant="secondary" className="text-muted-foreground select-none">
+      <CalendarDaysIcon />
+      Due {formatDistance(dueDate, Date.now(), { addSuffix: true })}
+    </Badge>
+  )
+}
 
 export default function TaskCard({ task, ref, done, ...dialog }: {
   task: Task,
@@ -11,9 +30,16 @@ export default function TaskCard({ task, ref, done, ...dialog }: {
   promptDelete: VoidFunction,
   promptEdit: VoidFunction,
 }) {
+  const [_, setParams] = useSearchParams()
+
   return (
     <TaskContextMenu promptDelete={dialog.promptDelete} promptEdit={dialog.promptEdit}>
-      <div ref={ref} className="w-full h-fit bg-secondary border border-border rounded-xl">
+      <div
+        onClick={() => setParams({task: task.id})}
+        ref={ref}
+        title="View task"
+        className="hover:cursor-pointer w-full h-fit bg-secondary border border-border rounded-xl"
+      >
         <div className={`p-3 leading-tight text-sm ${done ? "text-muted-foreground line-through" : ""}`}>
           <h4>
             {task.name}
@@ -21,23 +47,13 @@ export default function TaskCard({ task, ref, done, ...dialog }: {
         </div>
         {(task.due_date || task.description.length > 0 || done) &&
           <div className="p-1.5 space-x-1.5 bg-card border-b rounded-b-xl flex flex-row">
-            {done &&
-              <Badge variant="secondary" className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300">
-                <CheckIcon />
-                Done
-              </Badge>
-            }
+            { done && <DoneBadge /> }
             {task.description.length > 0 &&
               <Badge variant="secondary">
                 <TextIcon className="stroke-muted-foreground" />
               </Badge>
             }
-            {task.due_date && !done &&
-              <Badge variant="secondary" className="text-muted-foreground">
-                <CalendarDaysIcon />
-                Due {formatDistance(task.due_date, Date.now(), { addSuffix: true })}
-              </Badge>
-            }
+            { task.due_date && !done && <DueDateBadge dueDate={task.due_date} /> }
           </div>
         }
       </div>

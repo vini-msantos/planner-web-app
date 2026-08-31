@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
 import useColumnStore from "@/store/useColumnStore";
 import useDialogStore from "@/store/useDialogStore";
+import { formatLine, formatParagraph } from "@/utils/name_utils";
 
 type FormSchema = {
   name: string,
@@ -25,7 +26,8 @@ export default function ColumnEditingDialog() {
     const form = Object.fromEntries(formData.entries()) as unknown as FormSchema;
 
     const result = await patchColumn(active.column.id, {
-      ...form,
+      name: formatLine(form.name),
+      description: formatParagraph(form.description),
       completes_tasks: form.completes_tasks == 'on',
     })
     if (result.isOk) {
@@ -62,7 +64,7 @@ export default function ColumnEditingDialog() {
             </Field>
             <Field >
               <FieldLabel htmlFor="description">Description</FieldLabel>
-              <Textarea maxLength={180} id="description" name="description" autoComplete={"off"} defaultValue={active.column.description} placeholder={active.column.description} />
+              <Textarea maxLength={180} id="description" name="description" className="min-h-25 max-h-60" autoComplete={"off"} defaultValue={active.column.description} placeholder={active.column.description} />
             </Field>
             <FieldLabel htmlFor="completes_tasks">
               <Field orientation='horizontal'>

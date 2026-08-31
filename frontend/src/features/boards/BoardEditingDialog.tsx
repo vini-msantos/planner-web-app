@@ -6,7 +6,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
 import useBoardStore from "@/store/useBoardStore";
 import useDialogStore from "@/store/useDialogStore";
-import type { BoardPatchPayload } from "@/types/dtos";
+import { formatLine, formatParagraph } from "@/utils/name_utils";
+
+type FormSchema = {
+  name: string,
+  description: string,
+}
 
 export default function BoardEditingDialog() {
   const { active, closeDialog } = useDialogStore()
@@ -16,8 +21,11 @@ export default function BoardEditingDialog() {
     if (active.state != 'editBoard') return
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const data = Object.fromEntries(formData.entries()) as unknown as BoardPatchPayload;
-    const result = await patchBoard(active.board.id, data)
+    const data = Object.fromEntries(formData.entries()) as unknown as FormSchema;
+    const result = await patchBoard(active.board.id, {
+      name: formatLine(data.name),
+      description: formatParagraph(data.description),
+    })
     if (result.isOk) {
       toast.add({
         type: 'success',
@@ -52,7 +60,7 @@ export default function BoardEditingDialog() {
             </Field>
             <Field >
               <FieldLabel htmlFor="description">Description</FieldLabel>
-              <Textarea defaultValue={active.board.description} placeholder={active.board.description} className="min-h-25" maxLength={180} id="description" name="description" autoComplete={"off"} />
+              <Textarea defaultValue={active.board.description} placeholder={active.board.description} className="min-h-25 max-h-60" maxLength={180} id="description" name="description" autoComplete={"off"} />
             </Field>
             <DialogFooter>
               <Button variant={'outline'} onClickCapture={() => closeDialog()}>Cancel</Button>

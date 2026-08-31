@@ -8,7 +8,7 @@ import { toast } from "@/components/ui/toast";
 import useColumnStore from "@/store/useColumnStore";
 import useDialogStore from "@/store/useDialogStore";
 import type { Board } from "@/types/models";
-import { slugify } from "@/utils/name_utils";
+import { formatLine, formatParagraph, slugify } from "@/utils/name_utils";
 
 export type ColumnCreationDialogData = {
   onCreate?: () => void,
@@ -34,7 +34,8 @@ export default function ColumnCreationDialog() {
     const id = `${active.data.board.id}~${slugify(form.name)}`
 
     const result = await createColumn({
-      ...form,
+      name: formatLine(form.name),
+      description: formatParagraph(form.description),
       completes_tasks: form.completes_tasks == 'on',
       board_id: active.data.board.id,
       position: active.data.position,
@@ -76,7 +77,7 @@ export default function ColumnCreationDialog() {
             </Field>
             <Field >
               <FieldLabel htmlFor="description">Description</FieldLabel>
-              <Textarea maxLength={180} id="description" name="description" autoComplete={"off"} placeholder="A place to put my pending tasks." />
+              <Textarea maxLength={180} id="description" name="description" autoComplete={"off"} placeholder="A place to put my pending tasks." className="min-h-25 max-h-60"/>
             </Field>
             <FieldLabel htmlFor="completes_tasks">
               <Field orientation='horizontal'>

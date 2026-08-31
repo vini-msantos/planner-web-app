@@ -4,8 +4,9 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import type { Column } from "@/types/models"
 import { useSortable } from "@dnd-kit/react/sortable"
-import { TrashIcon, PlusIcon, PencilIcon } from "lucide-react"
+import { TrashIcon, PlusIcon, PencilIcon, CheckIcon } from "lucide-react"
 import "./column.css"
+import { Badge } from "@/components/ui/badge"
 
 export default function BoardColumn({ column, index, children, ...dialog }: {
   column: Column,
@@ -26,15 +27,26 @@ export default function BoardColumn({ column, index, children, ...dialog }: {
       promptDelete={dialog.promptDelete}
     >
       <div ref={ref} className="min-w-65 w-65 h-fit group/column">
-        <div ref={handleRef} className="bg-accent w-full h-fit p-4 pr-0 flex flex-col max-h-full rounded-t-xl border border-b-0 border-border">
-          <div className=" flex flex-row justify-between">
-            <h3 className="font-bold text-xl tracking-wide">
-              {column.name}
-            </h3>
-          </ div>
-          <p className="text-xs leading-tight text-muted-foreground pr-4">
-            {column.description}
-          </p>
+        <div ref={handleRef} className="bg-accent w-full h-fit p-4 pb-1 flex flex-col max-h-full rounded-t-xl border border-b-0 border-border">
+          <h3 className="font-bold pb-2 text-xl tracking-wide leading-5">
+            {column.name}
+          </h3>
+        { (column.completes_tasks || column.description.length > 0) && 
+          <div className="space-y-1">
+            {column.description.length > 0 &&
+              <p className="text-xs leading-tight text-muted-foreground pr-4">
+                {column.description}
+              </p>
+            }
+
+            {column.completes_tasks && 
+              <Badge title="This column marks all tasks inside it as completed." variant="outline">
+                <CheckIcon />
+                Completes tasks
+              </Badge> 
+            }
+          </div>
+        }
         </div>
 
         <div className="group/list bg-card w-full h-fit rounded-b-xl border border-t-0 border-border">

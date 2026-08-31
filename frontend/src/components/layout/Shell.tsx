@@ -9,6 +9,7 @@ import ColumnCreationDialog from "@/features/columns/ColumnCreationDialog";
 import TaskCreationDialog from "@/features/tasks/TaskCreationsDialog";
 import ColumnEditingDialog from "@/features/columns/ColumnEditingDialog";
 import TaskEditingDialog from "@/features/tasks/TaskEditingDialog";
+import TaskSheet from "@/features/tasks/TaskSheet";
 
 export default function Shell() {
   return (
@@ -26,6 +27,7 @@ export default function Shell() {
           <TaskCreationDialog />
           <TaskEditingDialog />
           <DeleteDialog />
+          <TaskSheet />
           <Toaster />
         </div>
       </SidebarInset>

@@ -30,7 +30,7 @@ export type TaskDumpPayload = {
 }
 
 export type TaskPatchPayload = {
-  title?: string
+  name?: string
   description?: string
   column_id?: string,
   update_due_date: boolean,
