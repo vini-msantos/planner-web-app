@@ -1,17 +1,9 @@
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
-import useColumnStore from "@/store/useColumnStore"
-import useTaskStore from "@/store/useTaskStore"
-import { compareAsc } from "date-fns"
 import TaskCard from "../tasks/Task"
+import useOverview from "@/hooks/useOverview"
 
 export default function OverviewPage() {
-  const tasks = useTaskStore(s => s.tasks)
-  const columns = useColumnStore(s => s.columns)
-
-  const nextDue = Object.entries(tasks)
-    .map(([_, t]) => t)
-    .filter(t => t.due_date != undefined && !columns[t.column_id].completes_tasks)
-    .toSorted((t1, t2) => compareAsc(t1.due_date!, t2.due_date!)*10 + t1.name.localeCompare(t2.name))
+  const {nextDue, promptDeleteTask, promptEditTask} = useOverview()
   
   return (
     <div className="w-full h-screen flex pt-20">
@@ -21,7 +13,10 @@ export default function OverviewPage() {
           <ScrollArea className="h-fit w-full pb-4">
             <div className="flex flex-row items-strech px-6">
               {nextDue.map(t => (
-                <TaskCard className="min-w-60 max-w-60 m-2" task={t} done={false} promptDelete={() => {}} promptEdit={() => {}}/>
+                <TaskCard className="min-w-60 max-w-60 m-2" task={t} done={false}
+                  promptDelete={() => promptDeleteTask(t)}
+                  promptEdit={() => promptEditTask(t)}
+                />
               ))}
               <div className="min-w-6"/>
             </div>

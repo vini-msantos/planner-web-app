@@ -50,7 +50,7 @@ export default function TaskCard({ className = "", task, ref, done, ...dialog }:
           <div className="p-1.5 space-x-1.5 bg-card border-b rounded-b-xl flex flex-row">
             { done && <DoneBadge /> }
             {task.description.length > 0 &&
-              <Badge variant="secondary">
+              <Badge variant="secondary" title="This card has a description">
                 <TextIcon className="stroke-muted-foreground" />
               </Badge>
             }

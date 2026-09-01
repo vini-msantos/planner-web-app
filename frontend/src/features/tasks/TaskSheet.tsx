@@ -5,6 +5,7 @@ import { PencilIcon, TrashIcon, XIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import useTaskSheet from "@/hooks/useTaskSheet"
 import { Link } from "react-router"
+import Markdown from "react-markdown"
 
 
 export default function TaskSheet() {
@@ -60,8 +61,10 @@ export default function TaskSheet() {
 
             <Separator className="mt-2 mb-4"/>
 
-            <SheetDescription className="whitespace-break-spaces">
-              {data.task.description}
+            <SheetDescription className="whitespace-break-spaces markdown">
+              <Markdown>
+                {data.task.description}
+              </Markdown>
             </SheetDescription>
           </SheetHeader>
         </>}
