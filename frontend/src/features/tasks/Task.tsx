@@ -23,7 +23,8 @@ export function DueDateBadge({dueDate}: {dueDate: Date}) {
   )
 }
 
-export default function TaskCard({ task, ref, done, ...dialog }: {
+export default function TaskCard({ className = "", task, ref, done, ...dialog }: {
+  className?: string
   task: Task,
   ref?: React.Ref<HTMLDivElement>
   done: boolean,
@@ -38,9 +39,9 @@ export default function TaskCard({ task, ref, done, ...dialog }: {
         onClick={() => setParams({task: task.id})}
         ref={ref}
         title="View task"
-        className="hover:cursor-pointer w-full h-fit bg-secondary border border-border rounded-xl"
+        className={`hover:cursor-pointer w-full flex flex-col bg-secondary border border-border rounded-xl ${className}`}
       >
-        <div className={`p-3 leading-tight text-sm ${done ? "text-muted-foreground line-through" : ""}`}>
+        <div className={`p-3 flex grow leading-tight text-sm ${done ? "text-muted-foreground line-through" : ""}`}>
           <h4>
             {task.name}
           </h4>

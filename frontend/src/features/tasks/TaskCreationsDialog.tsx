@@ -12,7 +12,7 @@ import type { Column } from "@/types/models";
 import { formatLine, formatParagraph } from "@/utils/name_utils";
 import { format } from "date-fns";
 import { XIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export type TaskCreationDialogData = {
   onCreate?: () => void,
@@ -29,6 +29,8 @@ export default function TaskCreationDialog() {
   const { active, closeDialog } = useDialogStore()
   const createTask = useTaskStore(s => s.createTask)
   const [dueDate, setDate] = useState<Date>()
+
+  useEffect(() => {active.state == 'none' && setDate(undefined)}, [active])
 
   const handleSubmit = async (event: React.SubmitEvent<HTMLFormElement>) => {
     if (active.state != 'createTask') return
@@ -89,7 +91,7 @@ export default function TaskCreationDialog() {
               <Popover>
                 <div className="flex flex-row items-center">
                   <PopoverTrigger render={
-                    <Button variant="outline" id="due-date" className="justify-start font-normal">
+                    <Button variant="outline" id="due-date" className="justify-start font-normal grow">
                       {dueDate ? format(dueDate, "PPP") : <span className="text-muted-foreground">Select a date or leave empty</span>}
                     </Button>
                   } />
