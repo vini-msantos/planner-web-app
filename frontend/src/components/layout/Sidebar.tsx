@@ -1,6 +1,6 @@
 import { type ReactNode } from "react"
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupAction, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, SidebarTrigger } from "../ui/sidebar"
-import { CalendarDays, CheckSquare, ChevronDown, Columns3, Home, PencilIcon, Pin, Plus, TrashIcon } from "lucide-react"
+import { CalendarDays, CheckSquare, ChevronDown, Columns3, HomeIcon, PencilIcon, PinIcon, PinOffIcon, Plus, TrashIcon } from "lucide-react"
 import { NavLink } from "react-router"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible"
 import useAppSidebar from "@/hooks/useAppSidebar"
@@ -35,7 +35,7 @@ export default function AppSidebar() {
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
-              <NavigationItem name="Overview" to="/" isOpen={open} icon={<Home className="w-5 h-5" />} />
+              <NavigationItem name="Overview" to="/" isOpen={open} icon={<HomeIcon className="w-5 h-5" />} />
               <NavigationItem name="Board Gallery" to="/boards" isOpen={open} icon={<Columns3 className="w-5 h-5" />} />
               <NavigationItem name="Weekly Planner" to="/planner" isOpen={open} icon={<CalendarDays className="w-5 h-5" />} />
             </SidebarMenu>
@@ -94,38 +94,59 @@ function NavigationItem({ name, to, isOpen, icon }: { name: string, to: string, 
 function BoardTile({ board, handlePin, handleEdit, handleDelete }: { board: Board, handleDelete: VoidFunction, handlePin: VoidFunction, handleEdit: VoidFunction }) {
   return (
     <SidebarMenuItem className="group/item">
-      <ContextMenu>
-        <ContextMenuTrigger>
-          <SidebarMenuButton tooltip={board.name} className="has-[.selected]:bg-accent transition-colors">
-            <NavLink
-              to={`/boards/${board.id}`}
-              className={({ isActive }) => `flex flex-row items-center w-full ${isActive ? "selected" : ""}`}
-            >
-              <span className="truncate text-xs">{board.name}</span>
-            </NavLink>
-          </SidebarMenuButton>
+      <BoardContextMenu
+        isPinned={board.pinned != null}
+        togglePin={handlePin}
+        promptDelete={handleDelete}
+        promptEdit={handleEdit}
+      >
+        <SidebarMenuButton tooltip={board.name} className="has-[.selected]:bg-accent transition-colors">
+          <NavLink
+            to={`/boards/${board.id}`}
+            className={({ isActive }) => `flex flex-row items-center w-full ${isActive ? "selected" : ""}`}
+          >
+            <span className="truncate text-xs">{board.name}</span>
+          </NavLink>
+        </SidebarMenuButton>
 
-          <SidebarMenuAction title={board.pinned ? "Unpin board" : "Pin board"} onClick={handlePin}
-            className={`group-hover/item:flex ${board.pinned ? "" : "hidden"}`}>
-            <Pin className={`stroke-chart-2 ${board.pinned ? "fill-chart-2" : ""}`} />
-            <span className="sr-only">Add Board</span>
-          </SidebarMenuAction>
-        </ContextMenuTrigger>
-        <ContextMenuContent>
-          <ContextMenuGroup>
-            <ContextMenuLabel>Board</ContextMenuLabel>
-            <ContextMenuItem onClick={handleEdit}>
-              <PencilIcon />
-              Edit
-            </ContextMenuItem>
-            <ContextMenuItem variant="destructive" className="w-full" onClick={handleDelete}>
-              <TrashIcon />
-              Delete
-            </ContextMenuItem>
-          </ContextMenuGroup>
-        </ContextMenuContent>
-      </ContextMenu>
+        <SidebarMenuAction title={board.pinned ? "Unpin board" : "Pin board"} onClick={handlePin}
+          className={`group-hover/item:flex ${board.pinned ? "" : "hidden"}`}>
+          <PinIcon className={`stroke-chart-2 ${board.pinned ? "fill-chart-2" : ""}`} />
+        </SidebarMenuAction>
+      </BoardContextMenu>
     </SidebarMenuItem>
   )
 }
 
+export function BoardContextMenu({children, isPinned, ...action}: {
+  children: React.ReactElement[] | React.ReactElement,
+  togglePin: VoidFunction,
+  isPinned: boolean,
+  promptDelete: VoidFunction,
+  promptEdit: VoidFunction,
+}) {
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger>
+       {children}
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuGroup>
+          <ContextMenuLabel>Board</ContextMenuLabel>
+          <ContextMenuItem onClick={action.promptEdit}>
+            <PencilIcon />
+            Edit
+          </ContextMenuItem>
+          <ContextMenuItem onClick={action.togglePin}>
+            {isPinned ? <PinOffIcon /> : <PinIcon  />}
+            {isPinned ? "Unpin board" : "Pin board"}
+          </ContextMenuItem>
+          <ContextMenuItem variant="destructive" className="w-full" onClick={action.promptDelete}>
+            <TrashIcon />
+            Delete
+          </ContextMenuItem>
+        </ContextMenuGroup>
+      </ContextMenuContent>
+    </ContextMenu>
+  )
+}

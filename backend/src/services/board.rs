@@ -53,10 +53,13 @@ pub async fn patch(pool: &SqlitePool, id: &str, payload: BoardPatchPayload) -> a
         UPDATE boards SET
             name = COALESCE($1, name),
             description = COALESCE($2, description),
-            pinned = $3
-        WHERE id = $4;
+            pinned = CASE
+                WHEN $3 IS TRUE THEN $4
+                ELSE pinned
+            END
+        WHERE id = $5;
         "#,
-        &payload.name, &payload.description, pin, id
+        &payload.name, &payload.description, payload.pinned.is_some(), pin, id
     ).execute(pool).await?;
     Ok(())
 }
