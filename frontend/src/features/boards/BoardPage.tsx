@@ -46,9 +46,9 @@ function BoardDisplay({ data }: { data: UseBoard }) {
   ]
 
   const handleDragOver = (event: DragOverEvent) => {
-    event.preventDefault()
     const { source } = event.operation;
     if (source?.type != 'task') return;
+    event.preventDefault()
     data.updateTasksLocally(move(taskOrder, event));
   }
   const handleDragEnd = (event: DragEndEvent) => {
