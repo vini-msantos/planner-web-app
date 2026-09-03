@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
-import type { Board, Column, Task } from "@/types/models";
+import type { Board, Task } from "@/types/models";
 import { GhostIcon, PlusIcon } from "lucide-react";
 import { useSortable } from "@dnd-kit/react/sortable"
 import useBoard, { type UseBoard } from "@/hooks/useBoard";
@@ -82,12 +82,10 @@ function BoardDisplay({ data }: { data: UseBoard }) {
                 >
                   {data.taskOrder[columnId].map((taskId, ti) => (
                     <BoardTask
-                      column={columns[columnId]}
+                      columnId={columnId}
                       index={ti}
                       key={taskId}
                       task={tasks[taskId]}
-                      promptDelete={() => data.promptDeleteTask(tasks[taskId])}
-                      promptEdit={() => data.promptEditTask(tasks[taskId])}
                     />
                   ))}
                 </BoardColumn>
@@ -151,13 +149,11 @@ function EmptyState({ board, promptCreateColumn }: { board: Board, promptCreateC
   )
 }
 
-function BoardTask({ task, index, column, promptDelete, promptEdit }: {
+function BoardTask({ task, index, columnId }: {
   task: Task,
   index: number,
-  column: Column
-  promptEdit: VoidFunction,
-  promptDelete: VoidFunction,
+  columnId: string
 }) {
-  const { ref } = useSortable({ id: task.id, index, type: "task", accept: "task", group: column.id })
-  return <TaskCard done={column.completes_tasks} task={task} ref={ref} promptDelete={promptDelete} promptEdit={promptEdit} />
+  const { ref } = useSortable({ id: task.id, index, type: "task", accept: "task", group: columnId })
+  return <TaskCard task={task} ref={ref} />
 }

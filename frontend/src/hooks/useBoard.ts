@@ -1,7 +1,6 @@
 import { getRequest } from "@/api";
 import useBoardStore from "@/store/useBoardStore";
 import useColumnStore from "@/store/useColumnStore";
-import useDialogStore from "@/store/useDialogStore";
 import useTaskStore from "@/store/useTaskStore";
 import type { BoardDto } from "@/types/dtos";
 import type { Board, Column, Task } from "@/types/models";
@@ -9,6 +8,7 @@ import { calculateNewPosition } from "@/utils/position";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
 import { useShallow } from "zustand/shallow";
+import useDialog from "./useDialog";
 
 type State =
   | { state: 'error' }
@@ -41,22 +41,13 @@ export default function useBoard(): State {
 
   const [boardData, setBoard] = useState<UseBoardData | 'error' | 'loading'>('loading')
   const lastSync = useRef<Record<string, string[]>>(undefined)
-
-  const { showColumnCreationDialog, showDeleteDialog, showTaskCreationDialog, showColumnEditingDialog, showTaskEditingDialog } = useDialogStore(
-    useShallow(s => ({
-      showDeleteDialog: s.showDeleteDialog,
-      showColumnCreationDialog: s.showColumnCreationDialog,
-      showTaskCreationDialog: s.showTaskCreationDialog,
-      showColumnEditingDialog: s.showColumnEditingDialog,
-      showTaskEditingDialog: s.showTaskEditingDialog,
-    }))
-  )
+  const dialog = useDialog()
 
   const allBoards = useBoardStore(s => s.boards)
-  const { columns: allColumns, deleteColumn, patchColumn } = useColumnStore(
+  const { columns: allColumns, patchColumn } = useColumnStore(
     useShallow(s => ({ columns: s.columns, deleteColumn: s.deleteColumn, patchColumn: s.patchColumn }))
   )
-  const { tasks: allTasks, deleteTask, patchTask } = useTaskStore(
+  const { tasks: allTasks, patchTask } = useTaskStore(
     useShallow(s => ({ tasks: s.tasks, deleteTask: s.deleteTask, patchTask: s.patchTask }))
   )
   const fetchBoard = async () => {
@@ -102,34 +93,23 @@ export default function useBoard(): State {
   return {
     state: 'ok',
     ...boardData,
-    promptDeleteColumn: (column: Column) => {
-      showDeleteDialog({
-        name: column.name,
-        description: "Deleting a column also deletes all tasks contained inside it. Are you sure you want to proceed?",
-        onConfirm: () => deleteColumn(column.id)
-      })
-    },
-    promptDeleteTask: (task: Task) => {
-      showDeleteDialog({
-        name: task.name,
-        onConfirm: () => deleteTask(task.id)
-      })
-    },
+    promptDeleteColumn: dialog.promptDeleteColumn,
+    promptDeleteTask: dialog.promptDeleteTask,
     promptCreateColumn: () => {
       const position = Object.entries(boardData.columns)
         .map(([_, t]) => t.position)
         .reduce((p1, p2) => Math.max(p1, p2), 0) + 1000
-      showColumnCreationDialog({ position, board: boardData.board })
+      dialog.promptCreateColumn({ position, board: boardData.board })
     },
     promptCreateTask: (column: Column) => {
       const position = Object.entries(boardData.tasks)
         .filter(([_, t]) => t.column_id == column.id)
         .map(([_, t]) => t.position)
         .reduce((p1, p2) => Math.max(p1, p2), 0) + 1000
-      showTaskCreationDialog({ position, column })
+      dialog.promptCreateTask({ position, column })
     },
-    promptEditColumn: (column: Column) => showColumnEditingDialog(column),
-    promptEditTask: (task: Task) => showTaskEditingDialog(task),
+    promptEditColumn: dialog.promptEditColumn,
+    promptEditTask: dialog.promptEditTask,
     updateTasksLocally: (taskOrder) => setBoard({ ...boardData, taskOrder }),
     revertLocalChanges: () => setBoard({ ...boardData, taskOrder: lastSync.current! }),
     moveColumn: (moved, newOrder) => {

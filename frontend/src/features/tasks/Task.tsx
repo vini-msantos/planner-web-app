@@ -1,5 +1,7 @@
 import { Badge } from "@/components/ui/badge"
 import { ContextMenu, ContextMenuContent, ContextMenuGroup, ContextMenuItem, ContextMenuLabel, ContextMenuTrigger } from "@/components/ui/context-menu"
+import useDialog from "@/hooks/useDialog"
+import useColumnStore from "@/store/useColumnStore"
 import type { Task } from "@/types/models"
 import { formatDate, formatDistance } from "date-fns"
 import { CalendarDaysIcon, CheckIcon, PencilIcon, TextIcon, TrashIcon } from "lucide-react"
@@ -23,18 +25,16 @@ export function DueDateBadge({dueDate}: {dueDate: Date}) {
   )
 }
 
-export default function TaskCard({ className = "", task, ref, done, ...dialog }: {
+export default function TaskCard({ className = "", task, ref }: {
   className?: string
   task: Task,
   ref?: React.Ref<HTMLDivElement>
-  done: boolean,
-  promptDelete: VoidFunction,
-  promptEdit: VoidFunction,
 }) {
   const [_, setParams] = useSearchParams()
+  const done = useColumnStore(s => s.columns[task.column_id]?.completes_tasks)
 
   return (
-    <TaskContextMenu promptDelete={dialog.promptDelete} promptEdit={dialog.promptEdit}>
+    <TaskContextMenu task={task}>
       <div
         onClick={() => setParams({task: task.id})}
         ref={ref}
@@ -62,22 +62,19 @@ export default function TaskCard({ className = "", task, ref, done, ...dialog }:
   )
 }
 
-function TaskContextMenu({ promptDelete, promptEdit, children }: {
-  promptDelete: VoidFunction,
-  promptEdit: VoidFunction,
-  children: React.ReactElement,
-}) {
+function TaskContextMenu({ task, children }: { task: Task, children: React.ReactElement }) {
+  const { promptEditTask, promptDeleteTask } = useDialog()
   return (
     <ContextMenu>
       <ContextMenuTrigger render={children} />
       <ContextMenuContent>
         <ContextMenuGroup>
           <ContextMenuLabel>Task</ContextMenuLabel>
-          <ContextMenuItem onClick={promptEdit}>
+          <ContextMenuItem onClick={() => promptEditTask(task)}>
             <PencilIcon icon-data="inline" />
             Edit
           </ContextMenuItem>
-          <ContextMenuItem variant="destructive" onClick={promptDelete}>
+          <ContextMenuItem variant="destructive" onClick={() => promptDeleteTask(task)}>
             <TrashIcon icon-data="inline" />
             Delete
           </ContextMenuItem>

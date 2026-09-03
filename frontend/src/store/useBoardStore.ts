@@ -17,6 +17,7 @@ type BoardStore = {
   patchBoard: (id: string, patch: BoardPatchPayload) => ApiResult<null, BoardPatchError>,
   createBoard: (payload: BoardCreationPayload) => ApiResult<null, BoardCreationError>
   deleteBoard: (id: string) => ApiResult<null, BoardDeletionError>,
+  toggleBoardPin: (id: string) => ApiResult<null, BoardPatchError>
 }
 
 const useBoardStore = create<BoardStore>()(
@@ -29,14 +30,15 @@ const useBoardStore = create<BoardStore>()(
 
     fetchBoards()
 
+    const patchBoard = async (id: string, patch: BoardPatchPayload): ApiResult<null, BoardPatchError> => {
+      const result = await patchRequest("boards", id, patch)
+      if (result == 'ok') fetchBoards()
+      return result != 'error'? ok(null) : err('noSuchId') 
+    }
+
     return {
       loaded: false,
       boards: {},
-      patchBoard: async (id, patch): ApiResult<null, BoardPatchError> => {
-        const result = await patchRequest("boards", id, patch)
-        if (result == 'ok') fetchBoards()
-        return result != 'error'? ok(null) : err('noSuchId') 
-      },
       deleteBoard: async (id): ApiResult<null, BoardDeletionError> => {
         const result = await deleteRequest("boards", id)
         if (result == 'ok') fetchBoards()
@@ -47,6 +49,10 @@ const useBoardStore = create<BoardStore>()(
         const result = await createRequest("boards", payload)
         if (result == 'ok') fetchBoards()
         return result != 'error' ? ok(null) : err('badRequest') 
+      },
+      patchBoard,
+      toggleBoardPin: async (id: string) => {
+        return await patchBoard(id, { pinned: get().boards[id].pinned == undefined })
       },
     }
   }

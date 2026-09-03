@@ -7,7 +7,6 @@ import useTaskSheet from "@/hooks/useTaskSheet"
 import { Link } from "react-router"
 import Markdown from "react-markdown"
 
-
 export default function TaskSheet() {
   const data = useTaskSheet()
 
@@ -61,10 +60,11 @@ export default function TaskSheet() {
 
             <Separator className="mt-2 mb-4"/>
 
-            <SheetDescription className="whitespace-break-spaces markdown">
+            <SheetDescription className="whitespace-break-spaces markdown h-200 overflow-scroll">
               <Markdown>
                 {data.task.description}
               </Markdown>
+              <div className="min-h-100" />
             </SheetDescription>
           </SheetHeader>
         </>}

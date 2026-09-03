@@ -83,7 +83,7 @@ export default function TaskCreationDialog() {
             </Field>
             <Field >
               <FieldLabel htmlFor="description">Description</FieldLabel>
-              <Textarea maxLength={180} id="description" name="description" autoComplete={"off"} placeholder="Improve my rust skills by making a rest api." className="min-h-25 max-h-60"/>
+              <Textarea id="description" name="description" autoComplete={"off"} placeholder="Improve my rust skills by making a rest api." className="min-h-25 max-h-60"/>
             </Field>
 
             <Field>

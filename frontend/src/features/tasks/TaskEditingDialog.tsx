@@ -75,7 +75,7 @@ export default function TaskCreationDialog() {
             </Field>
             <Field >
               <FieldLabel htmlFor="description">Description</FieldLabel>
-              <Textarea maxLength={180} id="description" name="description" autoComplete={"off"} placeholder={active.task.description} defaultValue={active.task.description} className="min-h-25 max-h-60"/>
+              <Textarea id="description" name="description" autoComplete={"off"} placeholder={active.task.description} defaultValue={active.task.description} className="min-h-25 max-h-60"/>
             </Field>
 
             <Field>

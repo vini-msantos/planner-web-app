@@ -27,7 +27,7 @@ export default function useOverview() {
   Object.entries(tasks).forEach(t => {
     const column = columns[t[1].column_id]
     const board = boards[column.board_id]
-    if (!board?.pinned) return
+    if (!board.pinned) return
     if (column.completes_tasks) pinnedBoards[board.id].completedTaskCount++
     pinnedBoards[board.id].taskCount++
   })
