@@ -11,7 +11,7 @@ export default function OverviewPage() {
       {nextDue.length > 0 &&
         <ListSection title="Next due:">
           {nextDue.map(t => (
-            <TaskCard className="min-w-60 max-w-60 m-2" task={t} done={false} />
+            <TaskCard key={t.id} className="min-w-60 max-w-60 m-2" task={t} />
           ))}
         </ListSection>
       }

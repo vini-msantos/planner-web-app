@@ -4,11 +4,11 @@ import type { Board } from '@/types/models'
 import { err, ok, type ApiResult } from '@/utils/result'
 import { create } from 'zustand'
 
-type GenericError = 'timedOut' | 'badRequest'
-type UseBoardsError = GenericError
-type BoardPatchError = GenericError | 'invalidName' | 'noSuchId'
-type BoardDeletionError = GenericError | 'noSuchId'
-type BoardCreationError = GenericError | 'invalidName'
+export type GenericError = 'timedOut' | 'badRequest'
+export type UseBoardsError = GenericError
+export type BoardPatchError = GenericError | 'invalidName' | 'noSuchId'
+export type BoardDeletionError = GenericError | 'noSuchId'
+export type BoardCreationError = GenericError | 'invalidName'
 
 type BoardStore = {
   loaded: boolean,

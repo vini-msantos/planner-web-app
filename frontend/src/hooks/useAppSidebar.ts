@@ -1,11 +1,13 @@
 import { useSidebar } from "@/components/ui/sidebar"
 import useBoardStore from "@/store/useBoardStore"
 import { useState } from "react"
+import useDialog from "./useDialog"
 
 export default function useAppSidebar() {
   const { open } = useSidebar()
   const [boardsVisible, setBoardsVisible] = useState(true)
   const { error, boards: boardStore } = useBoardStore()
+  const { promptCreateBoard } = useDialog()
 
   const boards = Object.entries(boardStore).map(([_, b]) => b)
     .sort((a, b) => {
@@ -21,5 +23,6 @@ export default function useAppSidebar() {
     boardsVisible,
     setBoardsVisible,
     boards,
+    promptCreateBoard,
   }
 }

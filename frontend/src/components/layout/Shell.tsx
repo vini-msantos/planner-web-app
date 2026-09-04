@@ -1,15 +1,14 @@
 import { Outlet } from "react-router";
 import AppSidebar from "./Sidebar";
-import BoardCreationDialog from "@/features/boards/BoardCreationDialog";
 import { SidebarInset, SidebarProvider } from "../ui/sidebar";
 import DeleteDialog from "./DeleteDialog";
 import { Toaster } from "../ui/toast";
-import BoardEditingDialog from "@/features/boards/BoardEditingDialog";
-import ColumnCreationDialog from "@/features/columns/ColumnCreationDialog";
 import TaskCreationDialog from "@/features/tasks/TaskCreationsDialog";
-import ColumnEditingDialog from "@/features/columns/ColumnEditingDialog";
 import TaskEditingDialog from "@/features/tasks/TaskEditingDialog";
 import TaskSheet from "@/features/tasks/TaskSheet";
+import BoardDialog from "@/features/boards/BoardDialog";
+import ColumnDialog from "@/features/columns/ColumnDialog";
+import TaskDialog from "@/features/tasks/TaskDialog";
 
 export default function Shell() {
   return (
@@ -20,12 +19,9 @@ export default function Shell() {
           <main className="flex-1 flex flex-col min-w-0 min-h-0">
             <Outlet />
           </main>
-          <BoardCreationDialog />
-          <BoardEditingDialog />
-          <ColumnCreationDialog />
-          <ColumnEditingDialog />
-          <TaskCreationDialog />
-          <TaskEditingDialog />
+          <BoardDialog />
+          <ColumnDialog />
+          <TaskDialog />
           <DeleteDialog />
           <TaskSheet />
           <Toaster />

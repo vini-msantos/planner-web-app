@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -8,10 +8,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
 import useDialogStore from "@/store/useDialogStore";
 import useTaskStore from "@/store/useTaskStore";
+import type { Column } from "@/types/models";
 import { formatLine, formatParagraph } from "@/utils/name_utils";
 import { format } from "date-fns";
 import { XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+
+export type TaskCreationDialogData = {
+  column: Column,
+  position: number,
+}
 
 type FormSchema = {
   name: string,
@@ -20,8 +26,10 @@ type FormSchema = {
 
 export default function TaskCreationDialog() {
   const { active, closeDialog } = useDialogStore()
+  const createTask = useTaskStore(s => s.createTask)
   const patchTask = useTaskStore(s => s.patchTask)
   const [dueDate, setDate] = useState<Date>()
+  const { state } = active
 
   useEffect(() => {
     if (active.state == 'editTask') {
@@ -30,52 +38,70 @@ export default function TaskCreationDialog() {
   }, [active])
 
   const handleSubmit = async (event: React.SubmitEvent<HTMLFormElement>) => {
-    if (active.state != 'editTask') return
+    if (active.state != 'createTask' && active.state != 'editTask') return
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const form = Object.fromEntries(formData.entries()) as unknown as FormSchema;
+    const form = Object.fromEntries(formData) as unknown as FormSchema;
+    const id = state == 'editTask' ? active.task.id : crypto.randomUUID()
 
-    const result = await patchTask(active.task.id, {
-      name: formatLine(form.name),
-      description: formatParagraph(form.description),
-      update_due_date: true,
-      due_date: dueDate?.toISOString(),
-    })
+    const name = state == 'editTask' ? active.task.name : formatLine(form.name)
+    const description = state == 'editTask' ? active.task.name : formatParagraph(form.description)
+    const result = state == 'createTask'
+      ? await createTask({
+                name,
+                description,
+                column_id: active.data.column.id,
+                position: active.data.position,
+                due_date: dueDate?.toISOString(),
+                id,
+              })
+      : await patchTask(id, {
+                name,
+                description,
+                update_due_date: true,
+                due_date: dueDate?.toISOString(),
+              })
+
     if (result.isOk) {
       toast.add({
         type: 'success',
-        description: `Task '${active.task.name}' edited.`
+        description: `Task '${form.name}' ${state == 'createTask' ? "created" : "edited" }.`
       })
-      return closeDialog()
+      closeDialog()
+      return
     }
     if (result.error == 'invalidName') {
       return toast.add({
         type: 'warning',
-        description: `'${form.name}' is invalid.`
+        description: `'${form.name}' is invalid or already in use.`
       })
     }
     toast.add({
       type: 'error',
-      description: `Could not edit task '${active.task.name}'`
+      description: `Could not ${state == 'createColumn' ? "create" : "edit"} column '${form.name}'`
     })
   }
 
-  if (active.state != 'editTask') return <></>
+  const dialogTitle = state == 'editTask' ? `Editing ${active.task.name}` : "Creating a new task"
+  const namePlaceholder = state == 'editTask' ? active.task.name : "Rest api in rust"
+  const descriptionPlaceholder = state == 'editTask' ? active.task.description : "Improve my rust skills by making a rest api."
+  if (state != 'createTask' && state != 'editTask') return <></>
   return (
-    <Dialog open={active.state == 'editTask'} onOpenChange={(open) => !open && closeDialog()}>
+    <Dialog open={true} onOpenChange={(open) => !open && closeDialog()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="mx-4.5 text-center text-base font-bold">Editing '{active.task.name}'</DialogTitle>
+          <DialogTitle className="text-center text-base font-bold mx-5">{dialogTitle}</DialogTitle>
+          {state == 'createTask' && <DialogDescription>Tasks reside in columns and allow you to track pending activities.</DialogDescription>}
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <FieldGroup>
             <Field >
               <FieldLabel htmlFor="name">Name</FieldLabel>
-              <Input minLength={3} maxLength={40} id="name" name="name" type="text" autoComplete={"off"} placeholder={active.task.name} defaultValue={active.task.name} required />
+              <Input defaultValue={state == 'editTask' ? active.task.name : undefined} minLength={3} maxLength={100} id="name" name="name" type="text" autoComplete={"off"} placeholder={namePlaceholder} required />
             </Field>
             <Field >
               <FieldLabel htmlFor="description">Description</FieldLabel>
-              <Textarea id="description" name="description" autoComplete={"off"} placeholder={active.task.description} defaultValue={active.task.description} className="min-h-25 max-h-60"/>
+              <Textarea defaultValue={state == 'editTask' ? active.task.description : undefined} id="description" name="description" autoComplete={"off"} placeholder={descriptionPlaceholder} className="min-h-25 max-h-60"/>
             </Field>
 
             <Field>
@@ -91,6 +117,7 @@ export default function TaskCreationDialog() {
                     <XIcon className="stroke-muted-foreground" />
                   </Button>}
                 </div>
+
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
@@ -104,7 +131,7 @@ export default function TaskCreationDialog() {
 
             <DialogFooter>
               <Button variant={'outline'} onClickCapture={() => closeDialog()}>Cancel</Button>
-              <Button type="submit">Save changes</Button>
+              <Button type="submit">{state == 'editTask' ? "Save changes" : "Create task"}</Button>
             </DialogFooter>
           </FieldGroup>
         </form>
