@@ -10,8 +10,8 @@ import useDialogStore from "@/store/useDialogStore";
 import useTaskStore from "@/store/useTaskStore";
 import type { Column } from "@/types/models";
 import { formatLine, formatParagraph } from "@/utils/name_utils";
-import { format } from "date-fns";
-import { XIcon } from "lucide-react";
+import { format, parse } from "date-fns";
+import { ChevronDownIcon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export type TaskCreationDialogData = {
@@ -32,6 +32,7 @@ export default function TaskCreationDialog() {
   const { state } = active
 
   useEffect(() => {
+    if (state == 'none') setDate(undefined)
     if (active.state == 'editTask') {
       setDate(active.task.due_date ? new Date(active.task.due_date) : undefined)
     }
@@ -44,8 +45,8 @@ export default function TaskCreationDialog() {
     const form = Object.fromEntries(formData) as unknown as FormSchema;
     const id = state == 'editTask' ? active.task.id : crypto.randomUUID()
 
-    const name = state == 'editTask' ? active.task.name : formatLine(form.name)
-    const description = state == 'editTask' ? active.task.name : formatParagraph(form.description)
+    const name = formatLine(form.name)
+    const description = formatParagraph(form.description)
     const result = state == 'createTask'
       ? await createTask({
                 name,
@@ -104,30 +105,7 @@ export default function TaskCreationDialog() {
               <Textarea defaultValue={state == 'editTask' ? active.task.description : undefined} id="description" name="description" autoComplete={"off"} placeholder={descriptionPlaceholder} className="min-h-25 max-h-60"/>
             </Field>
 
-            <Field>
-              <FieldLabel htmlFor="due-date">Due date</FieldLabel>
-              <Popover>
-                <div className="flex flex-row items-center">
-                  <PopoverTrigger render={
-                    <Button variant="outline" id="due-date" className="justify-start font-normal grow">
-                      {dueDate ? format(dueDate, "PPP") : <span className="text-muted-foreground">Select a date or leave empty</span>}
-                    </Button>
-                  } />
-                  {dueDate && <Button title="Remove due date" className="ml-2" variant="ghost" size="icon" onClick={() => setDate(undefined)}>
-                    <XIcon className="stroke-muted-foreground" />
-                  </Button>}
-                </div>
-
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dueDate}
-                    onSelect={setDate}
-                    defaultMonth={dueDate}
-                  />
-                </PopoverContent>
-              </Popover>
-            </Field>
+            <DatetimePicker date={dueDate} setDate={setDate} />
 
             <DialogFooter>
               <Button variant={'outline'} onClickCapture={() => closeDialog()}>Cancel</Button>
@@ -140,3 +118,50 @@ export default function TaskCreationDialog() {
   )
 }
 
+function DatetimePicker({ date, setDate }: { date?: Date, setDate: (date?: Date) => void }) {
+  const [open, setOpen] = useState(false)
+  const handleSetDate = (newDate?: Date) => {
+    setOpen(false)
+    if (newDate == undefined) return setDate(undefined) 
+
+    setDate(new Date(newDate.getFullYear(), newDate.getMonth(), newDate.getDate(), date?.getHours() ?? 0, date?.getMinutes() ?? 0))
+  }
+
+  return (
+    <div className='flex flex-col gap-2'>
+      <FieldLabel htmlFor='date-picker' className='px-1'>
+        Due date
+      </FieldLabel>
+      <div className="flex flex-row w-full">
+        <Popover onOpenChange={setOpen} open={open}>
+          <PopoverTrigger render={
+            <Button variant='outline' id='date-picker' className='justify-between font-normal flex-1'>
+              {date ? date.toLocaleDateString() : 'Pick a date or leave empty'}
+              <ChevronDownIcon />
+            </Button>
+          }/>
+          <PopoverContent className='w-auto overflow-hidden p-0' align='start'>
+            <Calendar
+              mode='single'
+              selected={date}
+              onSelect={handleSetDate}
+            />
+          </PopoverContent>
+        </Popover>
+        <Input
+          onChange={(e) => setDate(parse(e.currentTarget.value, 'HH:mm', date!))}
+          type='time'
+          id='time-picker'
+          disabled={date == undefined}
+          defaultValue={date ? format(date, "HH:mm") : "23:59"}
+          className='bg-background ml-2 appearance-none flex-1 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none'
+        />
+        {date &&
+          <Button title="Remove due date" className="ml-2" variant="ghost" size="icon" onClick={() => setDate(undefined)}>
+            <XIcon className="stroke-muted-foreground" />
+          </Button>
+        }
+      </div>
+    </div>
+  )
+}

@@ -57,5 +57,5 @@ pub struct RoutineActivity {
     pub day_of_week: i64,
     pub time_minutes: i64,
     pub duration_minutes: i64,
-    pub routine_id: RoutineId
+    pub routine_id: RoutineId,
 }

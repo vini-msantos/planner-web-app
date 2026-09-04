@@ -32,6 +32,7 @@ export default function ColumnDialog() {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const form = Object.fromEntries(formData) as unknown as FormSchema;
+
     const id = state == 'editColumn'
       ? active.column.id
       : `${active.data.board.id}~${slugify(form.name)}`

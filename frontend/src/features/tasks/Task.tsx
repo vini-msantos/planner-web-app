@@ -3,7 +3,7 @@ import { ContextMenu, ContextMenuContent, ContextMenuGroup, ContextMenuItem, Con
 import useDialog from "@/hooks/useDialog"
 import useColumnStore from "@/store/useColumnStore"
 import type { Task } from "@/types/models"
-import { formatDate, formatDistance } from "date-fns"
+import { formatDate, formatDistance, isSameDay } from "date-fns"
 import { CalendarDaysIcon, CheckIcon, PencilIcon, TextIcon, TrashIcon } from "lucide-react"
 import { useSearchParams } from "react-router"
 
@@ -17,10 +17,14 @@ export function DoneBadge() {
 }
 
 export function DueDateBadge({dueDate}: {dueDate: Date}) {
+  const date = new Date(dueDate)
+  const text = isSameDay(new Date(), date)
+    ? `Due today at ${date.toLocaleTimeString(undefined, {timeStyle: 'short'})}`
+    : `Due ${formatDistance(date, Date.now(), { addSuffix: true })}`
   return (
-    <Badge title={formatDate(dueDate, "PPPP")} variant="secondary" className="text-muted-foreground select-none">
+    <Badge title={formatDate(date, "PPPPp")} variant="secondary" className="text-muted-foreground select-none">
       <CalendarDaysIcon />
-      Due {formatDistance(dueDate, Date.now(), { addSuffix: true })}
+      {text}
     </Badge>
   )
 }

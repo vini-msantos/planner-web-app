@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 
 use crate::models::{Board, BoardId, Column, ColumnId, Task, TaskId};
@@ -17,7 +17,7 @@ pub struct TaskCreationPayload {
     pub id: TaskId,
     pub name: String,
     pub description: String,
-    pub due_date: Option<DateTime<Utc>>,
+    pub due_date: Option<DateTime<Local>>,
     pub position: f64,
     pub column_id: ColumnId,
 }
@@ -33,9 +33,9 @@ pub struct TaskPatchPayload {
     pub description: Option<String>,
     #[serde(default)]
     pub update_due_date: bool,
-    pub due_date: Option<DateTime<Utc>>,
+    pub due_date: Option<DateTime<Local>>,
     pub column_id: Option<String>,
-    pub position: Option<f64>
+    pub position: Option<f64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -58,7 +58,7 @@ pub struct ColumnCreationPayload {
 
 #[derive(Debug, Deserialize)]
 pub struct ColumnDumpingPayload {
-    pub to: ColumnId
+    pub to: ColumnId,
 }
 
 #[derive(Debug, Deserialize)]
@@ -81,11 +81,11 @@ pub struct RoutinePatchPayload {
 }
 
 #[derive(Debug, Deserialize)]
-    pub struct ScheduledActivityPatchPayload {
+pub struct ScheduledActivityPatchPayload {
     pub name: Option<String>,
     #[serde(default)]
     pub update_task_id: bool,
     pub task_id: Option<TaskId>,
-    pub starts_on: Option<DateTime<Utc>>,
+    pub starts_on: Option<DateTime<Local>>,
     pub duration_minutes: Option<i64>,
 }
