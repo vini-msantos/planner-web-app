@@ -87,9 +87,13 @@
   text-decoration-line: underline;
 }
 
-.markdown ul,
+.markdown ul {
+  list-style-type: disc;
+  list-style-position: inside;
+}
+
 .markdown ol {
-  list-style: disc;
+  list-style-type: numeric;
   list-style-position: inside;
 }
 
