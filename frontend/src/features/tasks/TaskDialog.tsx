@@ -124,7 +124,7 @@ function DatetimePicker({ date, setDate }: { date?: Date, setDate: (date?: Date)
     setOpen(false)
     if (newDate == undefined) return setDate(undefined) 
 
-    setDate(new Date(newDate.getFullYear(), newDate.getMonth(), newDate.getDate(), date?.getHours() ?? 0, date?.getMinutes() ?? 0))
+    setDate(new Date(newDate.getFullYear(), newDate.getMonth(), newDate.getDate(), date?.getHours() ?? 23, date?.getMinutes() ?? 59))
   }
 
   return (
